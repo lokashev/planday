@@ -1,362 +1,1814 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>План на день — распределение по смене</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Golos+Text:wght@400;500;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0B151A; --panel:#10202A; --panel2:#0C1820;
-  --line:#1E3742; --line2:#2C4B58;
-  --ink:#EAF4F5; --mut:#8AA6AF; --dim:#5E7B85;
-  --amber:#FFB454; --mint:#5EEAD4; --sky:#7DD3FC;
-}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{background:var(--bg);color:var(--ink);font-family:'Golos Text',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
-::selection{background:rgba(255,180,84,.35)}
-body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:
-   linear-gradient(rgba(148,190,205,.035) 1px,transparent 1px) 0 0/100% 46px,
-   linear-gradient(90deg,rgba(148,190,205,.035) 1px,transparent 1px) 0 0/46px 100%;
-  -webkit-mask-image:radial-gradient(1200px at 50% 0%,#000 40%,transparent 100%);
-          mask-image:radial-gradient(1200px at 50% 0%,#000 40%,transparent 100%);
-}
-.glow{position:fixed;border-radius:50%;pointer-events:none;z-index:0}
-.g1{width:760px;height:760px;left:-220px;top:-260px;background:radial-gradient(circle,rgba(94,234,212,.10),transparent 65%);animation:drift 26s ease-in-out infinite alternate}
-.g2{width:820px;height:820px;right:-260px;top:120px;background:radial-gradient(circle,rgba(255,180,84,.09),transparent 65%);animation:drift 32s ease-in-out infinite alternate-reverse}
-@keyframes drift{to{transform:translate(70px,50px)}}
-
-.ticker{position:relative;z-index:2;overflow:hidden;border-bottom:1px solid var(--line);background:rgba(8,16,20,.7)}
-.tk-track{display:flex;width:max-content;animation:tk 48s linear infinite}
-.tk-track:hover{animation-play-state:paused}
-.tk-set{display:flex;align-items:center;gap:34px;padding:9px 17px;margin-right:34px}
-.tk-set span{font-family:'Unbounded';font-size:10px;letter-spacing:.22em;color:var(--dim);white-space:nowrap}
-.tk-set i{width:6px;height:6px;border-radius:2px;flex:none}
-@keyframes tk{to{transform:translateX(-50%)}}
-
-.wrap{max-width:1240px;margin:0 auto;padding:0 22px;position:relative;z-index:1}
-.top{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding-top:34px;padding-bottom:26px;flex-wrap:wrap}
-.eyebrow{font-family:'Unbounded';font-size:10px;letter-spacing:.3em;color:var(--mint);margin-bottom:10px}
-h1{font-family:'Unbounded';font-weight:800;font-size:clamp(26px,4.2vw,46px);line-height:1.05}
-h1 em{font-style:normal;color:var(--amber)}
-.date{margin-top:10px;color:var(--mut);font-size:14px}
-.date::before{content:"●";color:var(--amber);font-size:9px;margin-right:8px}
-.top-stats{display:flex;gap:12px}
-.stat{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:12px;padding:12px 18px;min-width:104px;text-align:right;transition:border-color .25s}
-.stat:hover{border-color:var(--line2)}
-.stat-n{display:block;font-family:'JetBrains Mono';font-weight:700;font-size:22px}
-.stat-l{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
-
-.grid{display:grid;grid-template-columns:412px minmax(0,1fr);gap:20px;align-items:start;padding-bottom:56px}
-.col-left{display:flex;flex-direction:column;gap:20px;min-width:0}
-.col-right{min-width:0}
-.panel{background:linear-gradient(180deg,#11212B,#0D1922);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 20px 50px -30px rgba(0,0,0,.6);min-width:0}
-.panel-h{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.panel-h h2{font-family:'Unbounded';font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
-.mark{width:10px;height:10px;border-radius:3px;background:var(--c);box-shadow:0 0 14px color-mix(in srgb,var(--c) 60%,transparent)}
-.count{margin-left:auto;font-family:'JetBrains Mono';font-size:12px;color:var(--mut);border:1px solid var(--line);padding:2px 9px;border-radius:99px}
-.live{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:11px;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}
-.pulse{width:8px;height:8px;border-radius:50%;background:var(--mint);animation:pl 1.8s infinite}
-@keyframes pl{0%{box-shadow:0 0 0 0 rgba(94,234,212,.45)}70%{box-shadow:0 0 0 9px rgba(94,234,212,0)}100%{box-shadow:0 0 0 0 rgba(94,234,212,0)}}
-
-.emp-row{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02);margin-bottom:9px;transition:border-color .2s,background .2s;animation:rowIn .3s ease both}
-.emp-row:hover{border-color:color-mix(in srgb,var(--c) 55%,var(--line));background:color-mix(in srgb,var(--c) 6%,transparent)}
-@keyframes rowIn{from{opacity:0;transform:translateX(-8px)}}
-.dot{width:11px;height:11px;border-radius:4px;background:var(--c);flex:none;box-shadow:0 0 10px color-mix(in srgb,var(--c) 50%,transparent)}
-.emp-name{flex:1;font-weight:600;font-size:15px;outline:none;border-bottom:1px dashed transparent;padding:2px 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.emp-name:focus{border-bottom-color:var(--c)}
-.stepper{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:9px;background:var(--panel2);flex:none}
-.stepper button{width:28px;height:30px;background:transparent;border:0;color:var(--mut);font-size:15px;cursor:pointer;transition:.15s}
-.stepper button:hover{background:var(--line);color:var(--ink)}
-.hval{min-width:52px;text-align:center;font-family:'JetBrains Mono';font-size:13px;padding:0 4px;outline:none}
-.hval::after{content:" ч";color:var(--dim);font-size:11px}
-.hval:focus{background:rgba(255,255,255,.05);border-radius:6px}
-.del{width:28px;height:28px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--dim);cursor:pointer;font-size:15px;transition:.15s;flex:none}
-.del:hover{border-color:#7f2d3a;color:#ff8a9b;background:rgba(255,90,110,.08)}
-.add-form{display:grid;grid-template-columns:minmax(0,1fr) 76px auto;gap:8px;margin-top:12px}
-input,select{font-family:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;min-width:0}
-input:focus,select:focus{border-color:var(--mint);box-shadow:0 0 0 3px rgba(94,234,212,.12)}
-#addHours{font-family:'JetBrains Mono';text-align:center}
-input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-input[type=number]{-moz-appearance:textfield;appearance:textfield}
-
-.plan-row{display:grid;grid-template-columns:36px minmax(0,1fr) 108px 74px;gap:10px;align-items:center;padding:9px 8px;border-radius:12px;transition:background .2s}
-.plan-row:hover{background:rgba(255,255,255,.025)}
-.picon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 12%,transparent);border:1px solid color-mix(in srgb,var(--c) 30%,transparent);color:var(--c)}
-.picon svg{width:18px;height:18px}
-.plabel{font-size:14px;font-weight:600;min-width:0}
-.plabel small{display:block;font-weight:400;font-size:11px;color:var(--dim)}
-.pval{font-family:'JetBrains Mono';font-size:14px;text-align:right}
-.pstep{font-size:12px;padding:8px 6px;color:var(--mut);cursor:pointer}
-.note{margin-top:14px;font-size:12.5px;line-height:1.55;color:var(--mut);border-left:2px solid var(--amber);padding-left:12px}
-.note b{color:var(--amber)}
-
-.share-wrap{margin:6px 0 12px}
-.share-bar{display:flex;height:14px;border-radius:99px;overflow:hidden;background:var(--panel2);border:1px solid var(--line)}
-.share-bar i{display:block;height:100%;background:var(--c);transition:width .5s cubic-bezier(.4,0,.2,1)}
-.share-legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:9px;font-size:12px;color:var(--mut)}
-.share-legend span{display:flex;align-items:center;gap:6px;min-width:0}
-.share-legend i{width:8px;height:8px;border-radius:3px;background:var(--c);flex:none}
-.share-legend b{color:var(--ink);font-family:'JetBrains Mono';font-weight:600}
-.fhint{font-size:12px;color:var(--dim);line-height:1.5;margin-bottom:16px;border-left:2px solid var(--mint);padding-left:10px}
-.fhint b{color:var(--mint);font-weight:600}
-
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,272px),1fr));gap:14px}
-.emp-card{background:linear-gradient(180deg,#132530,#0E1B23);border:1px solid var(--line);border-top:3px solid var(--c);border-radius:14px;padding:16px 16px 12px;transition:transform .25s,box-shadow .25s;animation:cardIn .4s ease both;min-width:0}
-.emp-card:hover{transform:translateY(-4px);box-shadow:0 18px 36px -18px color-mix(in srgb,var(--c) 45%,#000)}
-@keyframes cardIn{from{opacity:0;transform:translateY(12px) scale(.98)}}
-.emp-card header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-.emp-card h3{font-family:'Unbounded';font-size:16px;font-weight:600}
-.chips{display:flex;gap:6px;flex-wrap:wrap}
-.chip{font-family:'JetBrains Mono';font-size:11px;color:var(--mut);border:1px solid var(--line);border-radius:99px;padding:3px 9px;white-space:nowrap}
-.chip.c2{color:var(--c);border-color:color-mix(in srgb,var(--c) 45%,transparent)}
-.chip.c3{color:#7DF2C3;border-color:rgba(94,234,212,.45)}
-.load{height:5px;border-radius:99px;background:var(--panel2);overflow:hidden;margin-bottom:10px}
-.load-fill{height:100%;width:0;background:linear-gradient(90deg,color-mix(in srgb,var(--c) 55%,transparent),var(--c));transition:width .55s cubic-bezier(.4,0,.2,1);border-radius:99px}
-.mrow{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px dashed rgba(148,190,205,.13)}
-.mdot{width:8px;height:8px;border-radius:3px;background:var(--mc);flex:none}
-.mtext{flex:1;min-width:0}
-.mlabel{font-size:12px;color:var(--mut);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mraw{font-size:10px;color:var(--dim);font-family:'JetBrains Mono'}
-.mraw.up{color:color-mix(in srgb,var(--mc) 80%,#fff)}
-.mval{font-family:'JetBrains Mono';font-weight:700;font-size:15px;text-align:right;white-space:nowrap}
-.mval small{font-size:10px;color:var(--dim);font-weight:400;margin-left:2px}
-.fact{width:64px;padding:7px 8px;font-family:'JetBrains Mono';font-size:12.5px;text-align:right;border-radius:8px;flex:none}
-.fact::placeholder{color:var(--dim);font-size:11px}
-.fact.ok{border-color:rgba(94,234,212,.55);color:#7DF2C3;background:rgba(94,234,212,.06)}
-.fact.low{border-color:rgba(255,180,84,.5);color:#FFD9A0;background:rgba(255,180,84,.05)}
-
-.vs{margin-top:20px;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:rgba(255,255,255,.015)}
-.vs-title{font-family:'Unbounded';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
-.vs-head,.vs-row{display:grid;grid-template-columns:14px minmax(0,1fr) 80px 18px 80px 52px 80px;gap:8px;align-items:center}
-.vs-head{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);padding-bottom:4px}
-.vs-head span:nth-child(3),.vs-head span:nth-child(5),.vs-head span:nth-child(7){text-align:right}
-.vs-head span:nth-child(6){text-align:center}
-.vs-row{padding:7px 0;border-top:1px dashed rgba(148,190,205,.12);font-size:13px}
-.vs-row .dot{width:9px;height:9px}
-.vlabel{color:var(--mut);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.vplan,.vsum{font-family:'JetBrains Mono';text-align:right;white-space:nowrap}
-.vsum{font-weight:700}
-.varrow{color:var(--dim);text-align:center}
-.vdelta{font-family:'JetBrains Mono';font-size:11.5px;text-align:center;border-radius:99px;padding:2px 0;white-space:nowrap}
-.vdelta.up{color:#7DF2C3;background:rgba(94,234,212,.1)}
-.vdelta.zero{color:var(--dim);background:rgba(148,190,205,.08)}
-.vfact{font-family:'JetBrains Mono';text-align:right;font-weight:600;color:var(--dim);white-space:nowrap}
-.vfact.ok{color:#7DF2C3}
-.vfact.low{color:#FFD9A0}
-
-.actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
-.btn{font-family:inherit;font-weight:700;font-size:14px;padding:12px 20px;border-radius:11px;border:1px solid transparent;cursor:pointer;transition:transform .15s,box-shadow .2s,background .2s,color .2s,border-color .2s}
-.btn:active{transform:translateY(1px)}
-.btn.primary{background:var(--amber);color:#241403;box-shadow:0 8px 24px -10px rgba(255,180,84,.55)}
-.btn.primary:hover{background:#FFC474;transform:translateY(-1px)}
-.btn.primary.ok,.btn.ghost.ok{background:var(--mint);color:#04231B;border-color:var(--mint)}
-.btn.ghost{background:transparent;border-color:var(--line2);color:var(--mut)}
-.btn.ghost:hover{border-color:var(--mint);color:var(--ink)}
-.btn.shot{background:linear-gradient(135deg,#5EEAD4,#7DD3FC);color:#06222B;box-shadow:0 8px 24px -10px rgba(94,234,212,.5)}
-.btn.shot:hover{filter:brightness(1.08);transform:translateY(-1px)}
-.btn.shot.ok{background:var(--mint)}
-.add-form .btn{padding:10px 14px}
-.warn{border:1px solid rgba(255,180,84,.35);background:rgba(255,180,84,.07);color:#FFD9A0;border-radius:12px;padding:12px 14px;font-size:13px;margin-bottom:14px}
-.empty{border:1.5px dashed var(--line2);border-radius:14px;padding:36px 20px;text-align:center;color:var(--dim);font-size:14px}
-.foot{padding-bottom:40px;color:var(--dim);font-size:12.5px;border-top:1px solid var(--line);padding-top:18px}
-
-/* модалка скриншота */
-.modal{position:fixed;inset:0;z-index:50;background:rgba(5,11,14,.85);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;animation:mIn .25s ease}
-@keyframes mIn{from{opacity:0}}
-.modal-box{max-width:min(540px,100%);width:100%;max-height:94vh;display:flex;flex-direction:column;gap:12px}
-.modal-box img{width:100%;max-height:72vh;object-fit:contain;border-radius:14px;border:1px solid var(--line2);box-shadow:0 30px 80px -30px #000;background:var(--bg)}
-.modal-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
-.modal-actions .btn{flex:1;min-width:130px;padding:12px 10px;font-size:13.5px;text-align:center}
-.modal-hint{text-align:center;font-size:11.5px;color:var(--dim)}
-
-/* планшеты */
-@media(max-width:1040px){
-  .grid{grid-template-columns:minmax(0,1fr)}
-}
-/* мобильные */
-@media(max-width:700px){
-  .wrap{padding:0 12px}
-  .top{padding-top:20px;padding-bottom:16px;gap:14px}
-  .eyebrow{font-size:8.5px;letter-spacing:.2em;margin-bottom:8px}
-  .top-stats{width:100%;gap:8px}
-  .stat{flex:1;min-width:0;padding:10px 12px;text-align:center}
-  .stat-n{font-size:18px}
-  .stat-l{font-size:9px;letter-spacing:.04em}
-  .grid{gap:14px;padding-bottom:40px}
-  .col-left{gap:14px}
-  .panel{padding:16px 13px;border-radius:14px}
-  input,select{font-size:16px;padding:10px}
-  .pval{font-size:15px}
-  .pstep{font-size:13px;padding:9px 4px}
-  .plan-row{grid-template-columns:32px minmax(0,1fr) 92px 64px;gap:8px;padding:8px 4px}
-  .picon{width:32px;height:32px;border-radius:8px}
-  .picon svg{width:16px;height:16px}
-  .plabel{font-size:13px}
-  .plabel small{font-size:10px}
-  .add-form{grid-template-columns:minmax(0,1fr) 72px}
-  .add-form .btn{grid-column:1/-1}
-  .emp-row{gap:8px;padding:10px}
-  .emp-name{font-size:14px}
-  .stepper button{width:26px;height:30px}
-  .hval{min-width:44px;font-size:12px;padding:0 2px}
-  .cards{grid-template-columns:minmax(0,1fr);gap:12px}
-  .emp-card{padding:14px 12px 10px}
-  .emp-card:hover{transform:none}
-  .mrow{gap:6px;padding:7px 0}
-  .mval{font-size:14px}
-  .fact{width:58px;padding:8px 6px;font-size:13px}
-  .chip{font-size:10px;padding:2px 7px}
-  .vs{padding:12px 10px;margin-top:16px}
-  .vs-head,.vs-row{grid-template-columns:10px minmax(0,1fr) 58px 14px 58px 40px 58px;gap:5px}
-  .vs-row{font-size:11.5px;padding:6px 0}
-  .vs-head{font-size:8.5px;gap:5px}
-  .vplan,.vsum,.vfact{font-size:11px}
-  .vdelta{font-size:10px}
-  .actions{gap:8px}
-  .actions .btn{flex:1 1 45%;padding:13px 8px;font-size:13.5px;text-align:center}
-  .fhint,.note{font-size:11.5px}
-  .share-legend{font-size:11px;gap:6px 12px}
-  .date{font-size:13px}
-  .foot{font-size:11.5px}
-  .tk-set{gap:24px;padding:8px 12px;margin-right:24px}
-  .tk-set span{font-size:9px}
-  .modal-box img{max-height:64vh}
-}
-/* узкие экраны */
-@media(max-width:400px){
-  .vs-head,.vs-row{grid-template-columns:8px minmax(0,1fr) 48px 10px 48px 34px 48px;gap:4px}
-  .vs-row{font-size:10.5px}
-  .vs-head{font-size:8px}
-  .vplan,.vsum,.vfact{font-size:10px}
-  .vdelta{font-size:9px}
-  .plan-row{grid-template-columns:28px minmax(0,1fr) 78px 56px;gap:6px}
-  .picon{width:28px;height:28px}
-  .fact{width:52px;font-size:12px}
-  .mval{font-size:13px}
-  .stat-n{font-size:16px}
-  .emp-card h3{font-size:15px}
-  h1{font-size:24px}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>План на день и Конкурс продаж</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #0b0e14;
+            color: #f1f5f9;
+        }
+        /* Предотвращение авто-зума в iOS Safari при фокусе на инпутах */
+        input, select, textarea {
+            font-size: 16px !important;
+        }
+        /* Скрытие стрелочек у числовых полей */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .btn-active:active {
+            transform: scale(0.97);
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.8);
+            cursor: pointer;
+        }
+    </style>
 </head>
-<body>
-<div class="glow g1"></div><div class="glow g2"></div>
+<body class="text-slate-100 pb-28 min-h-screen selection:bg-indigo-500 selection:text-white">
 
-<div class="ticker"><div class="tk-track" id="tickerTrack"></div></div>
+    <!-- Главный мобильный контейнер -->
+    <div class="max-w-md mx-auto min-h-screen flex flex-col">
+        
+        <!-- Шапка + Навигация по вкладкам -->
+        <header class="bg-[#131722]/95 border-b border-slate-800/80 pt-3.5 pb-3 px-4 rounded-b-3xl shadow-lg sticky top-0 z-30 backdrop-blur-md">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-500/20 text-lg">
+                        📊
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-base font-extrabold tracking-tight text-white leading-tight">
+                                План & Конкурс
+                            </h1>
+                            <span id="cloudStatusBadge" onclick="switchTab('cloud')" class="cursor-pointer text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                                Локально
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-400">7 показателей • Рейтинг • Google БД</p>
+                    </div>
+                </div>
+                <button onclick="openResetModal()" class="text-xs bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 px-2.5 py-2 rounded-xl font-medium border border-slate-700/80 transition flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <span>Сброс</span>
+                </button>
+            </div>
 
-<header class="top wrap">
-  <div>
-    <div class="eyebrow">НАРЯД СМЕНЫ · АВТОРАСПРЕДЕЛЕНИЕ</div>
-    <h1>План <em>на день</em></h1>
-    <div class="date" id="dateLine"></div>
-  </div>
-  <div class="top-stats">
-    <div class="stat"><span class="stat-n" id="statEmp">0</span><span class="stat-l">в смене</span></div>
-    <div class="stat"><span class="stat-n" id="statH">0</span><span class="stat-l">часов</span></div>
-    <div class="stat"><span class="stat-n" id="statRound">0</span><span class="stat-l">округлений ↑</span></div>
-  </div>
-</header>
+            <!-- Переключатель вкладок (Segmented Control) -->
+            <div class="grid grid-cols-3 gap-1 bg-[#0b0e14] p-1 rounded-2xl border border-slate-800/90">
+                <button onclick="switchTab('daily')" id="tabBtn_daily" class="py-2 px-2 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5">
+                    <span>📊</span>
+                    <span>День</span>
+                </button>
+                <button onclick="switchTab('contest')" id="tabBtn_contest" class="py-2 px-2 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5">
+                    <span>🏆</span>
+                    <span>Конкурс</span>
+                </button>
+                <button onclick="switchTab('cloud')" id="tabBtn_cloud" class="py-2 px-2 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5">
+                    <span>☁️</span>
+                    <span>Google БД</span>
+                </button>
+            </div>
+        </header>
 
-<main class="wrap grid">
-  <section class="col-left">
-    <div class="panel">
-      <div class="panel-h"><span class="mark" style="--c:var(--mint)"></span><h2>Сотрудники</h2><span class="count" id="empCount">0</span></div>
-      <div id="empList"></div>
-      <form id="addForm" class="add-form" autocomplete="off">
-        <input id="addName" type="text" placeholder="Имя сотрудника" maxlength="20">
-        <input id="addHours" type="number" min="0" max="24" step="0.5" value="8" title="Часов в смене" inputmode="decimal">
-        <button class="btn ghost" type="submit">+ Добавить</button>
-      </form>
-    </div>
+        <!-- ==================== ВКЛАДКА 1: ДНЕВНОЙ ПЛАН ==================== -->
+        <main id="tabContent_daily" class="px-3.5 pt-4 space-y-4 flex-1">
 
-    <div class="panel">
-      <div class="panel-h"><span class="mark" style="--c:var(--amber)"></span><h2>Общий план</h2><span class="count" title="Шаг округления вверх — справа от каждого показателя">шаг ↑</span></div>
-      <div id="planList"></div>
-      <p class="note">План делится пропорционально часам и округляется <b>вверх</b> до выбранного шага. Итог по сотрудникам может выйти чуть выше плана — так и задумано: запас прочности.</p>
-    </div>
-  </section>
+            <!-- Выбор даты и точки -->
+            <div class="grid grid-cols-2 gap-2">
+                <div class="bg-[#151923] rounded-xl px-3 py-2 flex items-center gap-2 border border-slate-800/90 focus-within:border-indigo-500/70 transition">
+                    <span class="text-xs">📅</span>
+                    <input type="date" id="shiftDate" onchange="updateDate(this.value)" class="bg-transparent text-slate-100 font-medium w-full focus:outline-none text-xs">
+                </div>
+                <div class="bg-[#151923] rounded-xl px-3 py-2 flex items-center gap-2 border border-slate-800/90 focus-within:border-indigo-500/70 transition">
+                    <span class="text-xs">🏪</span>
+                    <input type="text" id="storeName" oninput="updateStoreName(this.value)" placeholder="Точка / Смена" class="bg-transparent text-slate-100 placeholder-slate-500 font-medium w-full focus:outline-none text-xs">
+                </div>
+            </div>
 
-  <section class="col-right">
-    <div class="panel">
-      <div class="panel-h"><span class="mark" style="--c:var(--sky)"></span><h2>Распределение</h2><span class="live"><span class="pulse"></span>автопересчёт</span></div>
-      <div class="share-wrap">
-        <div class="share-bar" id="shareBar"></div>
-        <div class="share-legend" id="shareLegend"></div>
-      </div>
-      <p class="fhint">✏️ Поле <b>«факт»</b> в карточках — туда вписывается результат дня. Кнопка <b>«План в чат»</b> соберёт текст для мессенджера, а <b>«Скриншот»</b> — красивую картинку с планом.</p>
-      <div id="warnBox"></div>
-      <div class="cards" id="cardsWrap"></div>
-      <div class="vs">
-        <div class="vs-title">Назначено против плана</div>
-        <div class="vs-head"><span></span><span>показатель</span><span>план</span><span></span><span>назначено</span><span>Δ</span><span>факт</span></div>
-        <div id="vsRows"></div>
-      </div>
-      <div class="actions">
-        <button class="btn shot" id="shotBtn" type="button">🖼 Скриншот</button>
-        <button class="btn primary" id="chatBtn" type="button">📱 План в чат</button>
-        <button class="btn ghost" id="copyBtn" type="button">⧉ Сводка</button>
-        <button class="btn ghost" id="clearFactsBtn" type="button">Стереть факты</button>
-        <button class="btn ghost" id="resetBtn" type="button">Сбросить день</button>
-      </div>
-    </div>
-  </section>
-</main>
+            <!-- БЛОК 1: ДНЕВНОЙ ПЛАН (7 ПОКАЗАТЕЛЕЙ) -->
+            <section class="bg-[#151923] rounded-2xl p-4 shadow-md border border-slate-800/80">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-xs">1</span>
+                        <h2 class="font-bold text-white text-sm">Дневной план точки</h2>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="fillDailyFromContest()" title="Взять план на период и поделить на дни конкурса" class="text-[11px] text-amber-300 hover:text-amber-200 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/25 transition">
+                            Из конкурса ÷ дни
+                        </button>
+                        <button onclick="clearMetricValues()" class="text-[11px] text-slate-400 hover:text-rose-400 px-2 py-1 rounded-lg bg-slate-800/60 border border-slate-700/50 transition">
+                            0
+                        </button>
+                    </div>
+                </div>
 
-<footer class="wrap foot">Округление — всегда в большую сторону. Если сумма по сотрудникам выше общего плана — это страховой запас, а не ошибка.</footer>
+                <!-- Настройки округления -->
+                <div class="flex items-center justify-between bg-[#0b0e14] px-3 py-2 rounded-xl border border-slate-800/80 mb-3">
+                    <span class="text-xs text-slate-300 font-medium">Округление планов:</span>
+                    <div class="flex bg-[#151923] p-0.5 rounded-lg border border-slate-800">
+                        <button type="button" id="roundIntBtn" onclick="toggleRounding(true)" class="px-2.5 py-1 rounded-md text-[11px] font-semibold transition">
+                            Целые (без остатка)
+                        </button>
+                        <button type="button" id="roundDecBtn" onclick="toggleRounding(false)" class="px-2.5 py-1 rounded-md text-[11px] font-semibold transition">
+                            Точные (0.1)
+                        </button>
+                    </div>
+                </div>
 
-<!-- модалка скриншота -->
-<div class="modal" id="shotModal" style="display:none">
-  <div class="modal-box">
-    <img id="shotImg" alt="План на смену — картинка">
-    <div class="modal-actions">
-      <button class="btn primary" id="dlBtn" type="button">⬇ Скачать PNG</button>
-      <button class="btn ghost" id="sendBtn" type="button" style="display:none">📤 Отправить</button>
-      <button class="btn ghost" id="imgCopyBtn" type="button">📋 Скопировать</button>
-      <button class="btn ghost" id="closeModal" type="button">Закрыть</button>
-    </div>
-    <div class="modal-hint">Картинка 1080px — идеально для WhatsApp и Telegram</div>
-  </div>
-</div>
+                <!-- Список 7 основных показателей плана -->
+                <div id="metricsList" class="grid grid-cols-1 gap-2"></div>
+            </section>
 
-<script>
-const ICONS={
- sim:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><rect x="9.2" y="12.5" width="6.6" height="5" rx="1"/><path d="M12.5 12.5v5M9.2 15h6.6"/></svg>',
- ticket:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5h16v3.2a2.3 2.3 0 0 0 0 4.6v3.2H4v-3.2a2.3 2.3 0 0 0 0-4.6V6.5Z"/><path d="M13.5 6.5v11" stroke-dasharray="2.4 2.6"/></svg>',
- box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20.5 7.5v9L12 21l-8.5-4.5v-9L12 3Z"/><path d="m3.5 7.5 8.5 4.5 8.5-4.5M12 12v9"/></svg>',
- head:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v-2.5a8 8 0 0 1 16 0V15"/><rect x="3" y="14" width="4.4" height="6.5" rx="1.6"/><rect x="16.6" y="14" width="4.4" height="6.5" rx="1.6"/></svg>',
- percent:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6"/><circle cx="7.5" cy="7.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>',
- family:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.2" cy="8" r="3.1"/><circle cx="16" cy="8" r="3.1"/><path d="M2.8 19.5c.4-3 2.7-4.9 5.4-4.9 1.5 0 2.9.6 3.9 1.6M10.7 19.5c.4-3 2.7-4.9 5.4-4.9 2.7 0 5 1.9 5.4 4.9"/></svg>'
-};
-const METRICS=[
- {id:'sim',  label:'Сим-карты',    unit:'шт', def:10,     color:'#FFB454', icon:ICONS.sim},
- {id:'abon', label:'Абонементы',   unit:'шт', def:10,     color:'#5EEAD4', icon:ICONS.ticket},
- {id:'tovar',label:'Товарка',      unit:'₽',  def:200000, color:'#7DD3FC', icon:ICONS.box},
- {id:'acc',  label:'Аксессуары',   unit:'₽',  def:10000,  color:'#FF9E80', icon:ICONS.head},
- {id:'fin',  label:'Фин. услуги',  unit:'₽',  def:10000,  color:'#C4B5FD', icon:ICONS.percent},
- {id:'mega', label:'Мега-семьи',   unit:'шт', def:5,      color:'#F9A8D4', icon:ICONS.family}
-];
-const PALETTE=['#FFB454','#5EEAD4','#7DD3FC','#FF9E80','#C4B5FD','#F9A8D4','#FDE68A','#86EFAC'];
-const EMOJI={'#FFB454':'🟠','#5EEAD4':'🟢','#7DD3FC':'🔵','#FF9E80':'🔴','#C4B5FD':'🟣','#F9A8D4':'🩷','#FDE68A':'🟡','#86EFAC':'🟩'};
-const emojiOf=c=>EMOJI[c]||'🔸';
-const KEY='planboard_v2';
-const uid=()=>Math.random().toString(36).slice(2,9);
-const nf=new Intl.NumberFormat('ru-RU');
-const nf1=new Intl.NumberFormat('ru-RU',{maximumFractionDigits:1});
-const fmt=n=>nf.format(Math.round(Number(n)||0));
-const fmtH=h=>String(Math.round((Number(h)||0)*10)/10).replace('.',',');
+            <!-- БЛОК 2: СОТРУДНИКИ И ЧАСЫ -->
+            <section class="bg-[#151923] rounded-2xl p-4 shadow-md border border-slate-800/80">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/20 flex items-center justify-center font-bold text-xs">2</span>
+                        <h2 class="font-bold text-white text-sm">Сотрудники в смене</h2>
+                    </div>
+                    <div class="text-xs font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/25 px-2.5 py-1 rounded-lg" id="totalHoursBadge">
+                        Всего: 0 ч.
+                    </div>
+                </div>
 
-function seed(){
-  return {
-    emps:[{id:uid(),name:'Руслан',hours:8,color:PALETTE[0]},{id:uid(),name:'Лиза',hours:8,color:PALETTE[1]}],
-    plan:Object.fromEntries(METRICS.map(m=>[m.id,m.def])),
-    steps:Object.fromEntries(METRICS.map(m=>[m.id,0])),
-    facts:{}
-  };
+                <!-- Сохраненные сотрудники (быстрый выбор в 1 клик) -->
+                <div id="savedStaffContainer" class="hidden mb-3">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-[11px] text-slate-400 font-medium">Быстрое добавление в смену:</span>
+                    </div>
+                    <div id="savedStaffChips" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1"></div>
+                </div>
+
+                <!-- Форма быстрого добавления сотрудника -->
+                <div class="bg-[#0b0e14] p-3 rounded-xl border border-slate-800 mb-3.5">
+                    <div class="flex gap-2 mb-2.5">
+                        <div class="flex-1">
+                            <label class="block text-[11px] font-medium text-slate-400 mb-1">Имя продавца</label>
+                            <input type="text" id="newEmpName" placeholder="Введите имя..." onkeydown="if(event.key==='Enter') focusHours()" class="w-full bg-[#151923] border border-slate-700/80 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-medium">
+                        </div>
+                        <div class="w-24">
+                            <label class="block text-[11px] font-medium text-slate-400 mb-1">Часы</label>
+                            <input type="number" id="newEmpHours" inputmode="decimal" step="0.5" min="0.5" max="24" value="12" onkeydown="if(event.key==='Enter') addEmployeeFromForm()" class="w-full bg-[#151923] border border-slate-700/80 rounded-xl px-2 py-2 text-emerald-400 text-center font-extrabold focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+
+                    <!-- Быстрые кнопки часов + Кнопка Добавить -->
+                    <div class="flex items-center justify-between gap-2 pt-1">
+                        <div class="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                            <button type="button" onclick="setQuickHours(4)" class="px-2 py-1.5 text-xs font-semibold rounded-lg bg-[#151923] border border-slate-800 text-slate-300 hover:border-indigo-500 active:bg-indigo-500/20">4ч</button>
+                            <button type="button" onclick="setQuickHours(6)" class="px-2 py-1.5 text-xs font-semibold rounded-lg bg-[#151923] border border-slate-800 text-slate-300 hover:border-indigo-500 active:bg-indigo-500/20">6ч</button>
+                            <button type="button" onclick="setQuickHours(8)" class="px-2 py-1.5 text-xs font-semibold rounded-lg bg-[#151923] border border-slate-800 text-slate-300 hover:border-indigo-500 active:bg-indigo-500/20">8ч</button>
+                            <button type="button" onclick="setQuickHours(10)" class="px-2 py-1.5 text-xs font-semibold rounded-lg bg-[#151923] border border-slate-800 text-slate-300 hover:border-indigo-500 active:bg-indigo-500/20">10ч</button>
+                            <button type="button" onclick="setQuickHours(11)" class="px-2 py-1.5 text-xs font-semibold rounded-lg bg-[#151923] border border-slate-800 text-slate-300 hover:border-indigo-500 active:bg-indigo-500/20">11ч</button>
+                            <button type="button" onclick="setQuickHours(12)" class="px-2 py-1.5 text-xs font-semibold rounded-lg bg-[#151923] border border-slate-800 text-slate-300 hover:border-indigo-500 active:bg-indigo-500/20">12ч</button>
+                        </div>
+                        <button type="button" onclick="addEmployeeFromForm()" class="btn-active shrink-0 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-md shadow-indigo-600/20 flex items-center gap-1 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                            Добавить
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Список добавленных сотрудников с их расчетами -->
+                <div id="employeesList" class="space-y-3"></div>
+
+                <!-- Кнопка переноса смены в Конкурс -->
+                <div class="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                    <span class="text-[11px] text-slate-400">Хотите зачесть эти часы в конкурс?</span>
+                    <button onclick="pushShiftHoursToContest()" class="btn-active text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 px-3 py-2 rounded-xl transition flex items-center gap-1.5 shrink-0">
+                        <span>🏆</span>
+                        <span>+Часы в конкурс</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- БЛОК 3: ПРЕДПРОСМОТР И ЭКСПОРТ В ЧАТ -->
+            <section class="bg-[#151923] rounded-2xl p-4 shadow-md border border-slate-800/80">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-purple-500/15 text-purple-400 border border-purple-500/20 flex items-center justify-center font-bold text-xs">3</span>
+                        <h2 class="font-bold text-white text-sm">Сообщение для чата</h2>
+                    </div>
+                    <label class="flex items-center gap-1.5 cursor-pointer select-none text-xs text-slate-300 bg-[#0b0e14] px-2.5 py-1.5 rounded-lg border border-slate-800">
+                        <input type="checkbox" id="hideZeroToggle" onchange="toggleHideZero(this.checked)" class="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0 w-3.5 h-3.5">
+                        <span>Скрыть пустые (0)</span>
+                    </label>
+                </div>
+
+                <div class="grid grid-cols-2 gap-1.5 bg-[#0b0e14] p-1 rounded-xl mb-3 text-xs font-semibold border border-slate-800">
+                    <button onclick="setTemplateStyle('by_employee')" id="tpl_by_employee" class="py-1.5 px-2 rounded-lg transition text-center">
+                        👤 По сотрудникам
+                    </button>
+                    <button onclick="setTemplateStyle('by_metric')" id="tpl_by_metric" class="py-1.5 px-2 rounded-lg transition text-center">
+                        📌 По показателям
+                    </button>
+                </div>
+
+                <div class="relative">
+                    <textarea id="chatPreview" rows="11" class="w-full bg-[#090b10] text-slate-100 border border-slate-800 font-mono text-xs leading-relaxed p-3.5 rounded-xl focus:outline-none focus:border-emerald-500 resize-y"></textarea>
+                    <button onclick="regeneratePreview()" class="absolute top-2.5 right-2.5 bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-[11px] px-2.5 py-1 rounded-lg border border-slate-700 transition">
+                        🔄 Обновить
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- ==================== ВКЛАДКА 2: КОНКУРС И ПЕРИОД ==================== -->
+        <main id="tabContent_contest" class="px-3.5 pt-4 space-y-4 flex-1 hidden">
+
+            <!-- НАСТРОЙКА ПЕРИОДА КОНКУРСА (3 дня, 7 дней, 10 дней и т.д.) -->
+            <section class="bg-[#151923] rounded-2xl p-4 shadow-md border border-slate-800/80">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-sm">🏆</span>
+                        <div>
+                            <h2 class="font-bold text-white text-sm">Настройки периода конкурса</h2>
+                            <p class="text-[11px] text-slate-400">Любая длительность: 3, 5, 7, 10 дней или своя</p>
+                        </div>
+                    </div>
+                    <span id="contestDaysBadge" class="text-xs font-extrabold bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-xl">
+                        7 дней
+                    </span>
+                </div>
+
+                <!-- Название конкурса и Даты -->
+                <div class="space-y-2.5 mb-3">
+                    <div>
+                        <label class="block text-[11px] text-slate-400 font-medium mb-1">Название конкурса / спринта</label>
+                        <input type="text" id="contestTitleInput" oninput="updateContestConfig('title', this.value)" placeholder="Например: Недельный спринт продаж" class="w-full bg-[#0b0e14] border border-slate-800 rounded-xl px-3 py-2 text-white font-semibold text-xs focus:outline-none focus:border-amber-500">
+                    </div>
+
+                    <!-- Длительность в днях: быстрые кнопки + поле -->
+                    <div class="bg-[#0b0e14] p-3 rounded-xl border border-slate-800">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs text-slate-300 font-semibold">Длительность периода (дней):</span>
+                            <div class="flex items-center gap-1.5">
+                                <button onclick="stepContestDays(-1)" class="w-7 h-7 rounded-lg bg-[#151923] border border-slate-700 text-slate-200 font-bold">−</button>
+                                <input type="number" id="contestDaysInput" min="1" max="90" oninput="updateContestConfig('daysCount', this.value)" class="w-12 bg-[#151923] border border-amber-500/40 rounded-lg py-1 text-center font-extrabold text-amber-400 text-xs focus:outline-none">
+                                <button onclick="stepContestDays(1)" class="w-7 h-7 rounded-lg bg-[#151923] border border-slate-700 text-slate-200 font-bold">+</button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-6 gap-1.5">
+                            <button onclick="setContestDays(3)" class="py-1.5 rounded-lg text-xs font-bold bg-[#151923] border border-slate-800 hover:border-amber-500/50 text-slate-300 transition">3 дн.</button>
+                            <button onclick="setContestDays(5)" class="py-1.5 rounded-lg text-xs font-bold bg-[#151923] border border-slate-800 hover:border-amber-500/50 text-slate-300 transition">5 дн.</button>
+                            <button onclick="setContestDays(7)" class="py-1.5 rounded-lg text-xs font-bold bg-[#151923] border border-slate-800 hover:border-amber-500/50 text-slate-300 transition">7 дн.</button>
+                            <button onclick="setContestDays(10)" class="py-1.5 rounded-lg text-xs font-bold bg-[#151923] border border-slate-800 hover:border-amber-500/50 text-slate-300 transition">10 дн.</button>
+                            <button onclick="setContestDays(14)" class="py-1.5 rounded-lg text-xs font-bold bg-[#151923] border border-slate-800 hover:border-amber-500/50 text-slate-300 transition">14 дн.</button>
+                            <button onclick="setContestDays(30)" class="py-1.5 rounded-lg text-xs font-bold bg-[#151923] border border-slate-800 hover:border-amber-500/50 text-slate-300 transition">30 дн.</button>
+                        </div>
+                    </div>
+
+                    <!-- Даты начала и конца (для заголовка) -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-[#0b0e14] rounded-xl px-3 py-2 border border-slate-800">
+                            <label class="block text-[10px] text-slate-400 mb-0.5">Старт периода</label>
+                            <input type="date" id="contestStartDate" onchange="updateContestConfig('startDate', this.value)" class="bg-transparent text-slate-100 font-semibold w-full focus:outline-none text-xs">
+                        </div>
+                        <div class="bg-[#0b0e14] rounded-xl px-3 py-2 border border-slate-800">
+                            <label class="block text-[10px] text-slate-400 mb-0.5">Конец периода (авто)</label>
+                            <div id="contestEndDateDisplay" class="text-xs font-bold text-amber-300 pt-0.5">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Аккордеон: Планы на период по 7 показателям -->
+                <div class="bg-[#0b0e14] rounded-xl border border-slate-800 overflow-hidden">
+                    <div class="px-3.5 py-2.5 flex items-center justify-between border-b border-slate-800/80">
+                        <div>
+                            <h3 class="text-xs font-bold text-white">🎯 План точки на весь период</h3>
+                            <p class="text-[10px] text-slate-400">Делится между участниками или считается в общий зачет</p>
+                        </div>
+                        <button onclick="calcPeriodPlanFromDaily()" class="btn-active text-[11px] font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 px-2.5 py-1.5 rounded-lg transition shrink-0">
+                            ⚡ Дневной × Дни
+                        </button>
+                    </div>
+                    <div id="contestTargetsList" class="p-3 space-y-2">
+                        <!-- Генерируется через JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ТУРНИРНАЯ ТАБЛИЦА / РЕЙТИНГ СОТРУДНИКОВ -->
+            <section class="bg-[#151923] rounded-2xl p-4 shadow-md border border-slate-800/80">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h2 class="font-bold text-white text-sm flex items-center gap-1.5">
+                            <span>🏅 Турнирная таблица</span>
+                        </h2>
+                        <p class="text-[11px] text-slate-400">Рейтинг по среднему % выполнения показателей</p>
+                    </div>
+                    <button onclick="openAddContestParticipantModal()" class="btn-active text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-xl shadow-md shadow-indigo-600/20 flex items-center gap-1">
+                        <span>+ Участник</span>
+                    </button>
+                </div>
+
+                <!-- Сводка выполнения плана точки за период -->
+                <div id="storeContestSummary" class="bg-[#0b0e14] rounded-xl p-3 border border-slate-800 mb-3.5">
+                    <!-- Генерируется JS -->
+                </div>
+
+                <!-- Карточки участников в рейтинге -->
+                <div id="leaderboardList" class="space-y-3">
+                    <!-- Генерируется JS -->
+                </div>
+            </section>
+
+            <!-- ПРЕДПРОСМОТР ТАБЛИЦЫ КОНКУРСА ДЛЯ ЧАТА -->
+            <section class="bg-[#151923] rounded-2xl p-4 shadow-md border border-slate-800/80">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="font-bold text-white text-sm">📢 Итоги конкурса для чата</h2>
+                    <button onclick="renderContestChatPreview()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg border border-slate-700">
+                        🔄 Обновить текст
+                    </button>
+                </div>
+                <textarea id="contestChatPreview" rows="11" class="w-full bg-[#090b10] text-slate-100 border border-slate-800 font-mono text-xs leading-relaxed p-3.5 rounded-xl focus:outline-none focus:border-amber-500 resize-y"></textarea>
+            </section>
+        </main>
+
+        <!-- ==================== ВКЛАДКА 3: GOOGLE ТАБЛИЦА (БД ДЛЯ VERCEL) ==================== -->
+        <main id="tabContent_cloud" class="px-3.5 pt-4 space-y-4 flex-1 hidden">
+
+            <!-- БЛОК ПОДКЛЮЧЕНИЯ И СИНХРОНИЗАЦИИ -->
+            <section class="bg-[#151923] rounded-2xl p-4 shadow-md border border-slate-800/80">
+                <div class="flex items-center gap-2.5 mb-3">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-lg shrink-0">
+                        ☁️
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-white text-sm">Google Таблица как База Данных</h2>
+                        <p class="text-[11px] text-slate-400">Идеально работает с бесплатным сайтом на Vercel</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-300 mb-1">
+                            Ссылка на веб-приложение Google Apps Script (Web App URL):
+                        </label>
+                        <input type="url" id="googleScriptUrlInput" oninput="saveGoogleScriptUrl(this.value)" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-[#0b0e14] border border-slate-700/90 rounded-xl px-3 py-2.5 text-xs text-emerald-300 placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono">
+                    </div>
+
+                    <!-- Кнопки Выгрузить / Загрузить -->
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button onclick="syncToGoogleSheets()" id="btnPushCloud" class="btn-active bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs py-3 px-3 rounded-xl shadow-md shadow-emerald-500/15 flex items-center justify-center gap-1.5 transition">
+                            <span>⬆️ Сохранить в Таблицу</span>
+                        </button>
+                        <button onclick="loadFromGoogleSheets()" id="btnPullCloud" class="btn-active bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs py-3 px-3 rounded-xl shadow-md shadow-indigo-600/20 flex items-center justify-center gap-1.5 transition">
+                            <span>⬇️ Загрузить из Таблицы</span>
+                        </button>
+                    </div>
+
+                    <div id="syncStatusBox" class="bg-[#0b0e14] border border-slate-800 rounded-xl p-3 text-xs text-slate-400 flex items-center justify-between">
+                        <span id="syncStatusText">Статус: Ожидание синхронизации</span>
+                        <span id="lastSyncTime" class="text-[11px] text-slate-500"></span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ПОШАГОВАЯ ИНСТРУКЦИЯ: КАК СВЯЗАТЬ GOOGLE ТАБЛИЦУ И VERCEL ЗА 2 МИНУТЫ -->
+            <section class="bg-[#151923] rounded-2xl p-4 shadow-md border border-slate-800/80 space-y-3">
+                <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                    <span>🚀</span>
+                    <span>Как подключить Google Таблицу за 2 минуты</span>
+                </h3>
+
+                <div class="space-y-2.5 text-xs text-slate-300 leading-relaxed">
+                    <div class="bg-[#0b0e14] p-3 rounded-xl border border-slate-800">
+                        <span class="font-bold text-emerald-400">Шаг 1.</span> Создайте новую пустую <a href="https://sheets.new" target="_blank" class="underline text-indigo-400 hover:text-indigo-300">Google Таблицу (sheets.new)</a>. В верхнем меню нажмите <b>Расширения → Apps Script</b>.
+                    </div>
+                    <div class="bg-[#0b0e14] p-3 rounded-xl border border-slate-800">
+                        <span class="font-bold text-emerald-400">Шаг 2.</span> Удалите весь текст в редакторе и вставьте готовый код ниже. Он <b>сам создаст наглядные листы</b> («Рейтинг_Конкурса», «План_Конкурса», «Дневной_План», «База_JSON»), чтобы вы могли смотреть и править цифры прямо из Google Таблицы!
+                    </div>
+                    <div class="bg-[#0b0e14] p-3 rounded-xl border border-slate-800">
+                        <span class="font-bold text-emerald-400">Шаг 3.</span> Нажмите синюю кнопку <b>«Начать развертывание» → «Новое развертывание»</b>. Выберите тип <b>«Веб-приложение»</b>:
+                        <ul class="list-disc list-inside mt-1 text-[11px] text-slate-400 space-y-0.5">
+                            <li>Запуск от имени: <b>Меня (Me)</b></li>
+                            <li>У кого есть доступ: <b>Все (Anyone)</b> — <i>обязательно!</i></li>
+                        </ul>
+                        Скопируйте полученный URL (заканчивается на <code class="text-emerald-400">/exec</code>) и вставьте в поле выше.
+                    </div>
+                </div>
+
+                <!-- Готовый код Google Apps Script -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Готовый код для Apps Script:</span>
+                        <button onclick="copyAppsScriptCode()" class="btn-active bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold px-3 py-1 rounded-lg transition">
+                            📋 Скопировать код скрипта
+                        </button>
+                    </div>
+                    <pre id="appsScriptCodeBlock" class="bg-[#090b10] border border-slate-800 text-emerald-300 p-3 rounded-xl text-[11px] font-mono overflow-x-auto max-h-56 leading-relaxed select-all">function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var dbSheet = ss.getSheetByName('База_JSON');
+  if (!dbSheet) {
+    return ContentService.createTextOutput(JSON.stringify({ status: 'empty' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  var rawJson = dbSheet.getRange('A2').getValue();
+  return ContentService.createTextOutput(rawJson || '{}')
+    .setMimeType(ContentService.MimeType.JSON);
 }
-function normalize(s){
-  if(!s||!Array.isArray(s.emps))return null;
+
+function doPost(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var body = e.postData.contents;
+  var data = JSON.parse(body);
+
+  // 1. Сохраняем полный слепок состояния для сайта на Vercel
+  var dbSheet = ss.getSheetByName('База_JSON') || ss.insertSheet('База_JSON');
+  dbSheet.clear();
+  dbSheet.getRange('A1').setValue('JSON состояние (не удалять)');
+  dbSheet.getRange('A2').setValue(body);
+  dbSheet.getRange('B1').setValue('Обновлено:');
+  dbSheet.getRange('B2').setValue(new Date());
+
+  // 2. Формируем красивую таблицу "Рейтинг_Конкурса" для просмотра в Google Sheets
+  var leaderSheet = ss.getSheetByName('Рейтинг_Конкурса') || ss.insertSheet('Рейтинг_Конкурса');
+  leaderSheet.clear();
+  var headers = ['Сотрудник', 'Часы за период', 'Сим', 'Абоны', 'Товарная выручка', 'Аксессуары', 'Фин услуги', 'Мега семья', 'Адаптер'];
+  leaderSheet.appendRow(headers);
+  leaderSheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#1e293b').setFontColor('#ffffff');
+
+  if (data.contest && data.contest.participants) {
+    data.contest.participants.forEach(function(p) {
+      var f = p.facts || {};
+      leaderSheet.appendRow([
+        p.name,
+        p.hours || 0,
+        f.sim || 0,
+        f.abon || 0,
+        f.tovarka || 0,
+        f.aks || 0,
+        f.fin || 0,
+        f.megasemya || 0,
+        f.adapter || 0
+      ]);
+    });
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({ status: 'ok', updated: new Date() }))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+                </div>
+            </section>
+        </main>
+
+        <!-- Фиксированная нижняя панель действий (Адаптируется под выбранную вкладку) -->
+        <div class="fixed bottom-0 left-0 right-0 bg-[#131722]/95 backdrop-blur-md border-t border-slate-800 p-3 z-30">
+            <div class="max-w-md mx-auto flex gap-2">
+                <button onclick="handlePrimaryAction()" id="primaryActionBtn" class="btn-active flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold py-3.5 px-4 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition text-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                    <span id="primaryActionText">Скопировать план в чат</span>
+                </button>
+                <button onclick="handleSecondaryShare()" id="shareBtn" class="btn-active bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold py-3.5 px-4 rounded-2xl flex items-center justify-center transition" title="Поделиться в Telegram / WhatsApp">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО: ВНЕСТИ ФАКТ ЗА ДЕНЬ / РЕДАКТИРОВАТЬ УЧАСТНИКА КОНКУРСА -->
+    <div id="factModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-[#161b26] border-t sm:border border-slate-700 rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <h3 id="factModalTitle" class="font-extrabold text-base text-white">Внести результат</h3>
+                    <p id="factModalSubtitle" class="text-xs text-slate-400">Прибавить факт за смену или изменить общий итог</p>
+                </div>
+                <button onclick="closeFactModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center font-bold">✕</button>
+            </div>
+
+            <!-- Переключатель режима: Прибавить за сегодня (+ к текущему) или Задать общий факт -->
+            <div class="grid grid-cols-2 gap-1.5 bg-[#0b0e14] p-1 rounded-xl mb-3 text-xs font-bold border border-slate-800">
+                <button type="button" id="factModeAddBtn" onclick="setFactModalMode('add')" class="py-2 rounded-lg transition">
+                    ➕ Прибавить за смену
+                </button>
+                <button type="button" id="factModeSetBtn" onclick="setFactModalMode('set')" class="py-2 rounded-lg transition">
+                    ✏️ Задать общий факт
+                </button>
+            </div>
+
+            <!-- Поле часов -->
+            <div class="bg-[#0b0e14] px-3 py-2.5 rounded-xl border border-slate-800 flex items-center justify-between mb-2.5">
+                <span class="text-xs font-semibold text-slate-300" id="factModalHoursLabel">⏱ Отработано часов:</span>
+                <input type="number" id="factModalHoursInput" inputmode="decimal" step="0.5" class="w-24 bg-[#151923] border border-indigo-500/50 rounded-lg px-2.5 py-1 text-right font-extrabold text-indigo-300">
+            </div>
+
+            <!-- Поля по 7 показателям -->
+            <div id="factModalMetricsInputs" class="space-y-2 mb-4">
+                <!-- Генерируется JS -->
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="closeFactModal()" class="w-1/3 py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs">
+                    Отмена
+                </button>
+                <button onclick="saveFactModal()" class="w-2/3 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-emerald-500/20">
+                    💾 Сохранить в таблицу
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО: ДОБАВИТЬ УЧАСТНИКА В КОНКУРС -->
+    <div id="addParticipantModal" class="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-[#181d2a] border border-slate-700 rounded-2xl max-w-xs w-full p-5 shadow-2xl">
+            <h3 class="font-bold text-base text-white mb-1">Новый участник конкурса</h3>
+            <p class="text-xs text-slate-400 mb-3">Введите имя сотрудника для добавления в турнирную таблицу периода.</p>
+            <input type="text" id="newContestEmpName" placeholder="Имя сотрудника..." onkeydown="if(event.key==='Enter') confirmAddContestParticipant()" class="w-full bg-[#0b0e14] border border-slate-700 rounded-xl px-3 py-2.5 text-white mb-3 focus:outline-none focus:border-indigo-500">
+            <div class="flex gap-2">
+                <button onclick="closeAddContestParticipantModal()" class="flex-1 py-2.5 bg-slate-800 text-slate-300 rounded-xl font-semibold text-xs">Отмена</button>
+                <button onclick="confirmAddContestParticipant()" class="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-xs">Добавить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно подтверждения сброса -->
+    <div id="resetModal" class="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-[#181d2a] border border-slate-700 rounded-2xl max-w-xs w-full p-5 shadow-2xl">
+            <h3 class="font-bold text-base text-white mb-1">Управление данными</h3>
+            <p class="text-xs text-slate-400 mb-4">Выберите, какие данные нужно очистить перед новой сменой или новым конкурсом:</p>
+            <div class="space-y-2">
+                <button onclick="resetShiftOnly()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-xs transition">
+                    Очистить только сегодняшнюю смену
+                </button>
+                <button onclick="resetContestScoresOnly()" class="w-full py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded-xl font-semibold text-xs transition">
+                    Обнулить факты конкурса (новый период)
+                </button>
+                <button onclick="resetFullDemo()" class="w-full py-2.5 bg-rose-500/15 text-rose-400 border border-rose-500/30 rounded-xl font-semibold text-xs hover:bg-rose-500/25 transition">
+                    Восстановить демо-пример
+                </button>
+                <button onclick="closeResetModal()" class="w-full py-2 text-slate-400 font-medium text-xs hover:text-white">
+                    Отмена
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Всплывающее уведомление (Toast) -->
+    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-slate-950 px-4 py-2.5 rounded-full shadow-xl text-xs font-extrabold flex items-center gap-2 z-50 transition-all duration-300 opacity-0 pointer-events-none -translate-y-3">
+        <span id="toastText">Скопировано!</span>
+    </div>
+
+    <script>
+        // --- КОНСТАНТЫ И 7 ФИКСИРОВАННЫХ ПОКАЗАТЕЛЕЙ ---
+        const STORAGE_KEY = 'daily_shift_and_contest_v3';
+
+        const CORE_METRICS = [
+            { id: 'sim', name: 'Сим', icon: '📱', unit: 'шт' },
+            { id: 'abon', name: 'Абоны', icon: '📅', unit: 'шт' },
+            { id: 'tovarka', name: 'Товарная выручка', icon: '💰', unit: '₽' },
+            { id: 'aks', name: 'Аксессуары', icon: '🎧', unit: '₽' },
+            { id: 'fin', name: 'Фин услуги', icon: '💳', unit: 'шт' },
+            { id: 'megasemya', name: 'Мега семья', icon: '👨‍👩‍👧', unit: 'шт' },
+            { id: 'adapter', name: 'Адаптер', icon: '🔌', unit: 'шт' }
+        ];
+
+        function getTodayString() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function createEmptyFacts() {
+            return { sim: 0, abon: 0, tovarka: 0, aks: 0, fin: 0, megasemya: 0, adapter: 0 };
+        }
+
+        const defaultState = {
+            activeTab: 'daily', // 'daily' | 'contest' | 'cloud'
+            date: getTodayString(),
+            storeName: '',
+            roundToInteger: true,
+            hideZeroMetrics: false,
+            templateStyle: 'by_employee',
+            googleScriptUrl: '',
+            lastSync: '',
+            metrics: [
+                { id: 'sim', name: 'Сим', icon: '📱', target: 15 },
+                { id: 'abon', name: 'Абоны', icon: '📅', target: 8 },
+                { id: 'tovarka', name: 'Товарная выручка', icon: '💰', target: 85000 },
+                { id: 'aks', name: 'Аксессуары', icon: '🎧', target: 15000 },
+                { id: 'fin', name: 'Фин услуги', icon: '💳', target: 4 },
+                { id: 'megasemya', name: 'Мега семья', icon: '👨‍👩‍👧', target: 5 },
+                { id: 'adapter', name: 'Адаптер', icon: '🔌', target: 6 }
+            ],
+            employees: [
+                { id: 'e1', name: 'Алексей', hours: 12 },
+                { id: 'e2', name: 'Мария', hours: 8 }
+            ],
+            savedStaff: ['Алексей', 'Мария', 'Дмитрий', 'Анна'],
+            contest: {
+                title: 'Битва продаж',
+                daysCount: 7,
+                startDate: getTodayString(),
+                targets: {
+                    sim: 105,
+                    abon: 56,
+                    tovarka: 595000,
+                    aks: 105000,
+                    fin: 28,
+                    megasemya: 35,
+                    adapter: 42
+                },
+                participants: [
+                    {
+                        id: 'p1',
+                        name: 'Алексей',
+                        hours: 36,
+                        facts: { sim: 42, abon: 21, tovarka: 245000, aks: 44000, fin: 11, megasemya: 14, adapter: 18 }
+                    },
+                    {
+                        id: 'p2',
+                        name: 'Мария',
+                        hours: 32,
+                        facts: { sim: 38, abon: 19, tovarka: 210000, aks: 39500, fin: 9, megasemya: 13, adapter: 15 }
+                    },
+                    {
+                        id: 'p3',
+                        name: 'Дмитрий',
+                        hours: 24,
+                        facts: { sim: 25, abon: 14, tovarka: 140000, aks: 22000, fin: 7, megasemya: 8, adapter: 9 }
+                    }
+                ]
+            }
+        };
+
+        let state = loadState();
+        let expandedParticipants = {}; // сохраняет раскрытые карточки в рейтинге
+        let activeFactModalEmpId = null;
+        let activeFactModalMode = 'add'; // 'add' | 'set'
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('daily_shift_plan_dark_v2');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    const mergedMetrics = CORE_METRICS.map(core => {
+                        const existing = (parsed.metrics || []).find(m => m.id === core.id);
+                        return {
+                            id: core.id,
+                            name: core.name,
+                            icon: core.icon,
+                            target: existing && existing.target !== undefined ? existing.target : 0
+                        };
+                    });
+                    const contest = {
+                        ...defaultState.contest,
+                        ...(parsed.contest || {}),
+                        targets: { ...defaultState.contest.targets, ...((parsed.contest && parsed.contest.targets) || {}) }
+                    };
+                    return { ...defaultState, ...parsed, metrics: mergedMetrics, contest };
+                }
+            } catch (e) {
+                console.error('Ошибка чтения localStorage:', e);
+            }
+            return JSON.parse(JSON.stringify(defaultState));
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                updateCloudBadge();
+            } catch (e) {
+                console.error('Ошибка сохранения localStorage:', e);
+            }
+        }
+
+        // --- ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ---
+        function switchTab(tabName) {
+            state.activeTab = tabName;
+            saveState();
+
+            const tabs = ['daily', 'contest', 'cloud'];
+            tabs.forEach(t => {
+                const content = document.getElementById('tabContent_' + t);
+                const btn = document.getElementById('tabBtn_' + t);
+                if (t === tabName) {
+                    content.classList.remove('hidden');
+                    btn.className = 'py-2 px-2 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-600/25';
+                } else {
+                    content.classList.add('hidden');
+                    btn.className = 'py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200';
+                }
+            });
+
+            // Обновляем нижнюю кнопку под контекст вкладки
+            const primaryText = document.getElementById('primaryActionText');
+            if (tabName === 'daily') {
+                primaryText.textContent = 'Скопировать дневной план в чат';
+            } else if (tabName === 'contest') {
+                primaryText.textContent = 'Скопировать рейтинг конкурса в чат';
+            } else {
+                primaryText.textContent = '☁️ Сохранить всё в Google Таблицу';
+            }
+
+            renderAll();
+        }
+
+        function handlePrimaryAction() {
+            if (state.activeTab === 'daily') {
+                copyTextFromElement('chatPreview', '✅ Дневной план скопирован в чат!');
+            } else if (state.activeTab === 'contest') {
+                copyTextFromElement('contestChatPreview', '🏆 Таблица конкурса скопирована в чат!');
+            } else {
+                syncToGoogleSheets();
+            }
+        }
+
+        async function handleSecondaryShare() {
+            const textId = state.activeTab === 'contest' ? 'contestChatPreview' : 'chatPreview';
+            const textToShare = document.getElementById(textId).value;
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: state.activeTab === 'contest' ? state.contest.title : `План на день`,
+                        text: textToShare
+                    });
+                } catch (e) {}
+            } else {
+                handlePrimaryAction();
+            }
+        }
+
+        // --- ПРОПОРЦИОНАЛЬНОЕ РАСПРЕДЕЛЕНИЕ ДНЕВНОГО ПЛАНА ---
+        function calculateDistribution() {
+            const totalHours = state.employees.reduce((sum, emp) => sum + (parseFloat(emp.hours) || 0), 0);
+            const result = {
+                totalHours: totalHours,
+                byEmployee: {},
+                byMetric: {}
+            };
+
+            state.employees.forEach(emp => {
+                const h = parseFloat(emp.hours) || 0;
+                const share = totalHours > 0 ? (h / totalHours) * 100 : 0;
+                result.byEmployee[emp.id] = {
+                    sharePercent: share,
+                    metrics: {}
+                };
+            });
+
+            state.metrics.forEach(metric => {
+                result.byMetric[metric.id] = {};
+                const totalTarget = parseFloat(metric.target) || 0;
+
+                if (totalHours <= 0 || state.employees.length === 0 || totalTarget === 0) {
+                    state.employees.forEach(emp => {
+                        result.byEmployee[emp.id].metrics[metric.id] = 0;
+                        result.byMetric[metric.id][emp.id] = 0;
+                    });
+                    return;
+                }
+
+                if (state.roundToInteger) {
+                    const exactShares = state.employees.map(emp => {
+                        const h = parseFloat(emp.hours) || 0;
+                        const exact = (h / totalHours) * totalTarget;
+                        const floored = Math.floor(exact);
+                        return { empId: emp.id, floored, remainder: exact - floored };
+                    });
+
+                    let currentSum = exactShares.reduce((acc, item) => acc + item.floored, 0);
+                    let diff = Math.round(totalTarget) - currentSum;
+
+                    const sortedForRemainder = [...exactShares].sort((a, b) => b.remainder - a.remainder);
+                    for (let i = 0; i < diff && i < sortedForRemainder.length; i++) {
+                        sortedForRemainder[i].floored += 1;
+                    }
+
+                    exactShares.forEach(item => {
+                        result.byEmployee[item.empId].metrics[metric.id] = item.floored;
+                        result.byMetric[metric.id][item.empId] = item.floored;
+                    });
+                } else {
+                    state.employees.forEach(emp => {
+                        const h = parseFloat(emp.hours) || 0;
+                        const val = Math.round(((h / totalHours) * totalTarget) * 10) / 10;
+                        result.byEmployee[emp.id].metrics[metric.id] = val;
+                        result.byMetric[metric.id][emp.id] = val;
+                    });
+                }
+            });
+
+            return result;
+        }
+
+        function formatNumber(num) {
+            if (num === null || num === undefined || num === '' || isNaN(num)) return '0';
+            return Number(num).toLocaleString('ru-RU', {
+                maximumFractionDigits: state.roundToInteger ? 0 : 1
+            });
+        }
+
+        function formatRussianDate(isoDate) {
+            if (!isoDate) return '';
+            const parts = isoDate.split('-');
+            if (parts.length !== 3) return isoDate;
+            const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+            const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+            return `${parts[2]}.${parts[1]}.${parts[0]} (${days[dateObj.getDay()]})`;
+        }
+
+        function getContestEndDateString() {
+            if (!state.contest.startDate) return '—';
+            const parts = state.contest.startDate.split('-');
+            if (parts.length !== 3) return '—';
+            const start = new Date(parts[0], parts[1] - 1, parts[2]);
+            const days = Math.max(1, parseInt(state.contest.daysCount) || 7);
+            start.setDate(start.getDate() + days - 1);
+            const dd = String(start.getDate()).padStart(2, '0');
+            const mm = String(start.getMonth() + 1).padStart(2, '0');
+            return `${dd}.${mm}.${start.getFullYear()} (${days} дн.)`;
+        }
+
+        // --- ОБЩИЙ РЕНДЕР ---
+        function renderAll() {
+            updateCloudBadge();
+
+            // Вкладка 1: День
+            document.getElementById('shiftDate').value = state.date;
+            document.getElementById('storeName').value = state.storeName || '';
+            document.getElementById('hideZeroToggle').checked = !!state.hideZeroMetrics;
+
+            const roundIntBtn = document.getElementById('roundIntBtn');
+            const roundDecBtn = document.getElementById('roundDecBtn');
+            if (state.roundToInteger) {
+                roundIntBtn.className = 'px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-500 text-slate-950 shadow-xs transition';
+                roundDecBtn.className = 'px-2.5 py-1 rounded-md text-[11px] font-semibold text-slate-400 hover:text-slate-200 transition';
+            } else {
+                roundIntBtn.className = 'px-2.5 py-1 rounded-md text-[11px] font-semibold text-slate-400 hover:text-slate-200 transition';
+                roundDecBtn.className = 'px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-500 text-slate-950 shadow-xs transition';
+            }
+
+            const dist = calculateDistribution();
+            renderMetrics();
+            renderSavedStaffChips();
+            renderEmployees(dist);
+            renderTemplateButtons();
+            renderChatPreview(dist);
+
+            // Вкладка 2: Конкурс
+            renderContestSection();
+
+            // Вкладка 3: Облако Google
+            document.getElementById('googleScriptUrlInput').value = state.googleScriptUrl || '';
+            if (state.lastSync) {
+                document.getElementById('lastSyncTime').textContent = state.lastSync;
+            }
+        }
+
+        function updateCloudBadge() {
+            const badge = document.getElementById('cloudStatusBadge');
+            if (state.googleScriptUrl && state.googleScriptUrl.startsWith('https://')) {
+                badge.textContent = '☁️ Google БД активна';
+                badge.className = 'cursor-pointer text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+            } else {
+                badge.textContent = 'Память телефона';
+                badge.className = 'cursor-pointer text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700';
+            }
+        }
+
+        // --- РЕНДЕР ВКЛАДКИ 1 (ДЕНЬ) ---
+        function renderMetrics() {
+            const container = document.getElementById('metricsList');
+            container.innerHTML = state.metrics.map(m => `
+                <div class="flex items-center justify-between gap-3 bg-[#0b0e14] px-3 py-2 rounded-xl border border-slate-800/90 focus-within:border-emerald-500/70 transition">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="w-7 h-7 rounded-lg bg-[#151923] border border-slate-800 flex items-center justify-center text-sm shrink-0">${m.icon}</span>
+                        <span class="font-semibold text-xs sm:text-sm text-slate-200 truncate">${escapeHtml(m.name)}</span>
+                    </div>
+                    <div class="w-32 shrink-0">
+                        <input type="number" inputmode="decimal" value="${m.target === 0 ? '' : m.target}" 
+                            oninput="updateMetricTarget('${m.id}', this.value)"
+                            placeholder="0"
+                            class="w-full bg-[#151923] border border-slate-700/80 rounded-lg px-3 py-1.5 text-right font-extrabold text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderSavedStaffChips() {
+            const container = document.getElementById('savedStaffContainer');
+            const chipsBox = document.getElementById('savedStaffChips');
+            if (!state.savedStaff || state.savedStaff.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+            const activeNames = new Set(state.employees.map(e => e.name.trim().toLowerCase()));
+
+            chipsBox.innerHTML = state.savedStaff.map(name => {
+                const isAdded = activeNames.has(name.trim().toLowerCase());
+                return `
+                    <div class="inline-flex items-center rounded-xl text-xs font-semibold shrink-0 transition ${isAdded ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-[#0b0e14] text-slate-300 border border-slate-800 hover:border-slate-700'}">
+                        <button type="button" onclick="quickAddSavedStaff('${escapeHtml(name)}')" class="px-2.5 py-1.5 flex items-center gap-1">
+                            <span class="${isAdded ? 'text-emerald-400' : 'text-indigo-400'}">${isAdded ? '✓' : '+'}</span>
+                            <span>${escapeHtml(name)}</span>
+                        </button>
+                        <button type="button" onclick="removeSavedStaff('${escapeHtml(name)}')" class="pr-2 pl-0.5 py-1.5 text-slate-500 hover:text-rose-400">×</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderEmployees(dist) {
+            const badge = document.getElementById('totalHoursBadge');
+            badge.textContent = `Всего: ${formatNumber(dist.totalHours)} ч. (${state.employees.length} чел.)`;
+
+            const container = document.getElementById('employeesList');
+            if (state.employees.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6 bg-[#0b0e14] rounded-xl border border-dashed border-slate-800">
+                        <p class="text-xs text-slate-400 font-medium">В смене пока нет сотрудников</p>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Добавьте продавцов выше, чтобы разделить план</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = state.employees.map(emp => {
+                const empDist = dist.byEmployee[emp.id] || { sharePercent: 0, metrics: {} };
+                const shareRounded = Math.round(empDist.sharePercent * 10) / 10;
+                const visibleMetrics = state.metrics.filter(m => !state.hideZeroMetrics || (parseFloat(m.target) || 0) > 0);
+
+                const metricsBadges = visibleMetrics.map(m => {
+                    const val = empDist.metrics[m.id] || 0;
+                    return `
+                        <div class="bg-[#151923] border border-slate-800/90 rounded-lg px-2.5 py-1.5 flex items-center justify-between">
+                            <span class="text-[11px] text-slate-400 truncate mr-1.5 flex items-center gap-1">
+                                <span>${m.icon}</span>
+                                <span class="truncate">${escapeHtml(m.name)}</span>
+                            </span>
+                            <span class="text-xs font-extrabold text-emerald-400 shrink-0">${formatNumber(val)}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="p-3 rounded-2xl border border-slate-800 bg-[#0b0e14] shadow-sm transition">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                <div class="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 font-extrabold text-xs flex items-center justify-center shrink-0">
+                                    ${escapeHtml((emp.name || '?').slice(0, 2).toUpperCase())}
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <input type="text" value="${escapeHtml(emp.name)}"
+                                        oninput="updateEmployee('${emp.id}', 'name', this.value)"
+                                        class="font-bold text-sm text-white bg-transparent focus:bg-[#151923] focus:outline-none rounded px-1 -ml-1 w-full truncate">
+                                    <div class="flex items-center gap-2 text-[11px] text-slate-400 font-medium">
+                                        <span>Доля смены: <strong class="text-indigo-400">${shareRounded}%</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-1 bg-[#151923] p-1 rounded-xl border border-slate-800 shrink-0">
+                                <button type="button" onclick="stepEmpHours('${emp.id}', -1)" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center">−</button>
+                                <div class="flex items-center px-1">
+                                    <input type="number" inputmode="decimal" step="0.5" min="0" max="24" value="${emp.hours}"
+                                        oninput="updateEmployee('${emp.id}', 'hours', this.value)"
+                                        class="w-9 text-center font-extrabold text-xs bg-transparent text-emerald-400 focus:outline-none">
+                                    <span class="text-[11px] text-slate-400 font-semibold">ч</span>
+                                </div>
+                                <button type="button" onclick="stepEmpHours('${emp.id}', 1)" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center">+</button>
+                            </div>
+
+                            <button type="button" onclick="removeEmployee('${emp.id}')" class="p-1.5 text-slate-500 hover:text-rose-400 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+
+                        <div class="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden mb-2.5">
+                            <div class="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-300" style="width: ${Math.min(100, Math.max(0, empDist.sharePercent))}%"></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-1.5 mb-2.5">
+                            ${metricsBadges}
+                        </div>
+
+                        <button onclick="openFactModalFromDaily('${escapeHtml(emp.name)}', ${emp.hours})" class="w-full py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/25 text-indigo-300 text-[11px] font-bold transition flex items-center justify-center gap-1">
+                            <span>✍️ Записать факт за день в конкурс</span>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTemplateButtons() {
+            ['by_employee', 'by_metric'].forEach(s => {
+                const btn = document.getElementById('tpl_' + s);
+                if (!btn) return;
+                btn.className = state.templateStyle === s
+                    ? 'py-1.5 px-2 rounded-lg transition text-center bg-indigo-600 text-white shadow-xs font-bold'
+                    : 'py-1.5 px-2 rounded-lg transition text-center text-slate-400 hover:text-slate-200';
+            });
+        }
+
+        function generateChatText(dist) {
+            const dateFormatted = formatRussianDate(state.date);
+            const storeHeader = state.storeName && state.storeName.trim() ? ` | ${state.storeName.trim()}` : '';
+            const activeMetrics = state.metrics.filter(m => !state.hideZeroMetrics || (parseFloat(m.target) || 0) > 0);
+
+            let lines = [];
+            lines.push(`📊 ПЛАН НА ДЕНЬ — ${dateFormatted}${storeHeader}`);
+            lines.push(`⏱ Часов в смене: ${formatNumber(dist.totalHours)} ч.`);
+            lines.push('');
+            lines.push(`🎯 ОБЩИЙ ПЛАН ТОЧКИ:`);
+
+            activeMetrics.forEach(m => {
+                lines.push(`${m.icon} ${m.name}: ${formatNumber(m.target || 0)}`);
+            });
+
+            lines.push(`────────────────────`);
+
+            if (state.employees.length === 0) {
+                lines.push(`(Добавьте сотрудников для расчета индивидуального плана)`);
+                return lines.join('\n');
+            }
+
+            if (state.templateStyle === 'by_employee') {
+                state.employees.forEach((emp, idx) => {
+                    const empDist = dist.byEmployee[emp.id];
+                    const shareStr = Math.round(empDist.sharePercent);
+                    lines.push(`👤 ${emp.name || 'Сотрудник'} (${formatNumber(emp.hours)}ч | ${shareStr}%):`);
+                    activeMetrics.forEach(m => {
+                        const val = empDist.metrics[m.id] || 0;
+                        lines.push(`• ${m.name}: ${formatNumber(val)} / `);
+                    });
+                    if (idx < state.employees.length - 1) lines.push('');
+                });
+            } else {
+                activeMetrics.forEach((m, mIdx) => {
+                    lines.push(`${m.icon} ${m.name} (План: ${formatNumber(m.target || 0)}):`);
+                    state.employees.forEach(emp => {
+                        const val = dist.byEmployee[emp.id].metrics[m.id] || 0;
+                        lines.push(`• ${emp.name} (${formatNumber(emp.hours)}ч): ${formatNumber(val)} / `);
+                    });
+                    if (mIdx < activeMetrics.length - 1) lines.push('');
+                });
+            }
+
+            lines.push(`────────────────────`);
+            lines.push(`✍️ Скопируйте и впишите свой ФАКТ после «/»`);
+
+            return lines.join('\n');
+        }
+
+        function renderChatPreview(dist) {
+            document.getElementById('chatPreview').value = generateChatText(dist || calculateDistribution());
+        }
+
+        function regeneratePreview() {
+            renderChatPreview(calculateDistribution());
+            showToast('🔄 Шаблон сообщения обновлен');
+        }
+
+        // --- РЕНДЕР И ЛОГИКА ВКЛАДКИ 2: КОНКУРС ПЕРИОДА ---
+        function calculateContestStandings() {
+            const participants = state.contest.participants || [];
+            const targets = state.contest.targets || {};
+            const totalContestHours = participants.reduce((acc, p) => acc + (parseFloat(p.hours) || 0), 0);
+
+            // Считаем общий факт точки по каждому показателю
+            const storeTotals = createEmptyFacts();
+            participants.forEach(p => {
+                CORE_METRICS.forEach(m => {
+                    storeTotals[m.id] += parseFloat((p.facts && p.facts[m.id]) || 0);
+                });
+            });
+
+            // Для каждого участника считаем личный план (пропорционально его часам в периоде или поровну) и % выполнения
+            const ranked = participants.map(p => {
+                const pHours = parseFloat(p.hours) || 0;
+                const hourShare = totalContestHours > 0
+                    ? (pHours / totalContestHours)
+                    : (participants.length > 0 ? 1 / participants.length : 0);
+
+                let sumPercents = 0;
+                let activeMetricsCount = 0;
+                const kpiDetails = {};
+
+                CORE_METRICS.forEach(m => {
+                    const storeTarget = parseFloat(targets[m.id]) || 0;
+                    const personalTarget = Math.round(storeTarget * hourShare);
+                    const fact = parseFloat((p.facts && p.facts[m.id]) || 0);
+                    let pct = 0;
+                    if (personalTarget > 0) {
+                        pct = (fact / personalTarget) * 100;
+                        sumPercents += Math.min(200, pct); // ограничиваем пик 200%, чтобы 1 перевыполненный KPI не искажал все
+                        activeMetricsCount++;
+                    }
+                    kpiDetails[m.id] = {
+                        personalTarget,
+                        fact,
+                        pct: Math.round(pct)
+                    };
+                });
+
+                const avgCompletion = activeMetricsCount > 0 ? Math.round((sumPercents / activeMetricsCount) * 10) / 10 : 0;
+
+                return {
+                    ...p,
+                    hourSharePercent: Math.round(hourShare * 100),
+                    avgCompletion,
+                    kpiDetails
+                };
+            });
+
+            // Сортируем по среднему % выполнения (по убыванию), затем по товарной выручке
+            ranked.sort((a, b) => {
+                if (b.avgCompletion !== a.avgCompletion) return b.avgCompletion - a.avgCompletion;
+                return ((b.facts && b.facts.tovarka) || 0) - ((a.facts && a.facts.tovarka) || 0);
+            });
+
+            return {
+                totalContestHours,
+                storeTotals,
+                ranked
+            };
+        }
+
+        function renderContestSection() {
+            document.getElementById('contestTitleInput').value = state.contest.title || '';
+            document.getElementById('contestDaysInput').value = state.contest.daysCount || 7;
+            document.getElementById('contestStartDate').value = state.contest.startDate || getTodayString();
+            document.getElementById('contestDaysBadge').textContent = `${state.contest.daysCount || 7} дн.`;
+            document.getElementById('contestEndDateDisplay').textContent = getContestEndDateString();
+
+            // Поля планов на период по 7 показателям
+            const targetsContainer = document.getElementById('contestTargetsList');
+            targetsContainer.innerHTML = CORE_METRICS.map(m => {
+                const val = (state.contest.targets && state.contest.targets[m.id]) || 0;
+                return `
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-xs text-slate-300 flex items-center gap-2">
+                            <span>${m.icon}</span>
+                            <span>${m.name}</span>
+                        </span>
+                        <input type="number" inputmode="decimal" value="${val === 0 ? '' : val}" placeholder="0"
+                            oninput="updateContestTarget('${m.id}', this.value)"
+                            class="w-32 bg-[#151923] border border-slate-700/80 rounded-lg px-2.5 py-1 text-right font-extrabold text-amber-300 text-xs focus:outline-none focus:border-amber-500">
+                    </div>
+                `;
+            }).join('');
+
+            const standings = calculateContestStandings();
+            renderStoreContestSummary(standings);
+            renderLeaderboard(standings);
+            renderContestChatPreview(standings);
+        }
+
+        function renderStoreContestSummary(standings) {
+            const box = document.getElementById('storeContestSummary');
+            const items = CORE_METRICS.map(m => {
+                const plan = parseFloat(state.contest.targets[m.id]) || 0;
+                const fact = standings.storeTotals[m.id] || 0;
+                const pct = plan > 0 ? Math.round((fact / plan) * 100) : 0;
+                return `
+                    <div class="bg-[#151923] p-2 rounded-lg border border-slate-800/90">
+                        <div class="flex items-center justify-between text-[11px] mb-1">
+                            <span class="text-slate-400 truncate">${m.icon} ${m.name}</span>
+                            <span class="font-bold ${pct >= 100 ? 'text-emerald-400' : 'text-amber-300'}">${pct}%</span>
+                        </div>
+                        <div class="text-xs font-extrabold text-white">${formatNumber(fact)} <span class="text-slate-500 font-normal">/ ${formatNumber(plan)}</span></div>
+                    </div>
+                `;
+            }).join('');
+
+            box.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-200">Общий факт магазина за период (${state.contest.daysCount} дн.)</span>
+                    <span class="text-[11px] text-slate-400">Часов: <strong class="text-white">${formatNumber(standings.totalContestHours)}ч</strong></span>
+                </div>
+                <div class="grid grid-cols-2 gap-1.5">
+                    ${items}
+                </div>
+            `;
+        }
+
+        function renderLeaderboard(standings) {
+            const container = document.getElementById('leaderboardList');
+            if (standings.ranked.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6 bg-[#0b0e14] rounded-xl border border-dashed border-slate-800">
+                        <p class="text-xs text-slate-400">Участников пока нет</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = standings.ranked.map((p, idx) => {
+                const rank = idx + 1;
+                const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+                const isExpanded = expandedParticipants[p.id] !== undefined ? expandedParticipants[p.id] : (idx === 0);
+
+                const badgeColor = p.avgCompletion >= 100
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                    : p.avgCompletion >= 70
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                        : 'bg-slate-800 text-slate-300 border-slate-700';
+
+                const kpiRows = CORE_METRICS.map(m => {
+                    const d = p.kpiDetails[m.id];
+                    const barWidth = Math.min(100, Math.max(0, d.pct));
+                    const barColor = d.pct >= 100 ? 'bg-emerald-500' : d.pct >= 70 ? 'bg-amber-400' : 'bg-indigo-500';
+                    return `
+                        <div class="bg-[#151923] px-2.5 py-2 rounded-xl border border-slate-800/80">
+                            <div class="flex items-center justify-between text-xs mb-1">
+                                <span class="text-slate-300 font-medium">${m.icon} ${m.name}</span>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="font-extrabold text-white">${formatNumber(d.fact)}</span>
+                                    <span class="text-slate-500 text-[11px]">/ ${formatNumber(d.personalTarget)}</span>
+                                    <span class="text-[11px] font-bold ${d.pct >= 100 ? 'text-emerald-400' : 'text-indigo-300'}">(${d.pct}%)</span>
+                                </div>
+                            </div>
+                            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div class="${barColor} h-full rounded-full" style="width: ${barWidth}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="bg-[#0b0e14] border ${rank === 1 ? 'border-amber-500/50' : 'border-slate-800'} rounded-2xl p-3.5 shadow-sm">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2.5 min-w-0 cursor-pointer flex-1" onclick="toggleExpandParticipant('${p.id}')">
+                                <div class="w-9 h-9 rounded-xl ${rank === 1 ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300' : 'bg-[#151923] border border-slate-800 text-slate-200'} font-extrabold text-base flex items-center justify-center shrink-0">
+                                    ${medal}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="font-extrabold text-sm text-white truncate">${escapeHtml(p.name)}</div>
+                                    <div class="text-[11px] text-slate-400">
+                                        Часов: <strong class="text-slate-200">${formatNumber(p.hours)}ч</strong> (${p.hourSharePercent}% смены)
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <span class="px-2.5 py-1 rounded-xl text-xs font-extrabold border ${badgeColor}">
+                                    ${p.avgCompletion}%
+                                </span>
+                                <button onclick="openFactModal('${p.id}')" class="btn-active bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-2.5 py-1.5 rounded-xl transition">
+                                    +Факт
+                                </button>
+                                <button onclick="removeContestParticipant('${p.id}')" class="p-1 text-slate-500 hover:text-rose-400" title="Удалить">
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Детализация по 7 показателям -->
+                        <div class="${isExpanded ? 'mt-3 pt-3 border-t border-slate-800/80 space-y-1.5' : 'hidden'}">
+                            ${kpiRows}
+                        </div>
+
+                        <button onclick="toggleExpandParticipant('${p.id}')" class="w-full mt-2 pt-1 text-center text-[11px] text-slate-500 hover:text-slate-300">
+                            ${isExpanded ? '▲ Свернуть показатели' : '▼ Показать все 7 показателей (План / Факт)'}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleExpandParticipant(id) {
+            expandedParticipants[id] = !expandedParticipants[id];
+            renderContestSection();
+        }
+
+        function renderContestChatPreview(standingsData) {
+            const st = standingsData || calculateContestStandings();
+            const lines = [];
+            lines.push(`🏆 ${state.contest.title.toUpperCase()} (${state.contest.daysCount} дн.)`);
+            lines.push(`📅 Период: с ${formatRussianDate(state.contest.startDate)} по ${getContestEndDateString()}`);
+            lines.push(`────────────────────`);
+            lines.push(`🏅 РЕЙТИНГ ПРОДАВЦОВ:`);
+            lines.push('');
+
+            st.ranked.forEach((p, idx) => {
+                const rank = idx + 1;
+                const medal = rank === 1 ? '🥇 1 место' : rank === 2 ? '🥈 2 место' : rank === 3 ? '🥉 3 место' : `🔹 ${rank} место`;
+                lines.push(`${medal} — ${p.name} (${p.avgCompletion}% | ${p.hours}ч)`);
+                CORE_METRICS.forEach(m => {
+                    const d = p.kpiDetails[m.id];
+                    if (d.personalTarget > 0 || d.fact > 0) {
+                        lines.push(`  ${m.icon} ${m.name}: ${formatNumber(d.fact)} / ${formatNumber(d.personalTarget)} (${d.pct}%)`);
+                    }
+                });
+                lines.push('');
+            });
+
+            lines.push(`────────────────────`);
+            lines.push(`🏪 ОБЩИЙ ИТОГ ТОЧКИ:`);
+            CORE_METRICS.forEach(m => {
+                const plan = parseFloat(state.contest.targets[m.id]) || 0;
+                const fact = st.storeTotals[m.id] || 0;
+                const pct = plan > 0 ? Math.round((fact / plan) * 100) : 0;
+                lines.push(`${m.icon} ${m.name}: ${formatNumber(fact)} из ${formatNumber(plan)} (${pct}%)`);
+            });
+
+            document.getElementById('contestChatPreview').value = lines.join('\n');
+        }
+
+        // --- УПРАВЛЕНИЕ НАСТРОЙКАМИ КОНКУРСА ---
+        function updateContestConfig(field, value) {
+            if (field === 'daysCount') {
+                state.contest.daysCount = Math.max(1, parseInt(value) || 1);
+            } else {
+                state.contest[field] = value;
+            }
+            saveState();
+            renderContestSection();
+        }
+
+        function setContestDays(days) {
+            state.contest.daysCount = days;
+            saveState();
+            renderContestSection();
+            showToast(`🗓 Период установлен: ${days} дн.`);
+        }
+
+        function stepContestDays(delta) {
+            const current = parseInt(state.contest.daysCount) || 7;
+            state.contest.daysCount = Math.max(1, Math.min(90, current + delta));
+            saveState();
+            renderContestSection();
+        }
+
+        function updateContestTarget(metricId, val) {
+            state.contest.targets[metricId] = val === '' ? 0 : parseFloat(val);
+            saveState();
+            const standings = calculateContestStandings();
+            renderStoreContestSummary(standings);
+            renderLeaderboard(standings);
+            renderContestChatPreview(standings);
+        }
+
+        function calcPeriodPlanFromDaily() {
+            const days = Math.max(1, parseInt(state.contest.daysCount) || 7);
+            state.metrics.forEach(m => {
+                const dailyVal = parseFloat(m.target) || 0;
+                state.contest.targets[m.id] = Math.round(dailyVal * days);
+            });
+            saveState();
+            renderContestSection();
+            showToast(`⚡ План на ${days} дн. рассчитан из дневного!`);
+        }
+
+        function fillDailyFromContest() {
+            const days = Math.max(1, parseInt(state.contest.daysCount) || 7);
+            state.metrics.forEach(m => {
+                const periodVal = parseFloat(state.contest.targets[m.id]) || 0;
+                m.target = state.roundToInteger ? Math.round(periodVal / days) : Math.round((periodVal / days) * 10) / 10;
+            });
+            saveState();
+            renderAll();
+            showToast(`📊 Дневной план = План конкурса ÷ ${days} дн.`);
+        }
+
+        function pushShiftHoursToContest() {
+            if (state.employees.length === 0) {
+                showToast('⚠️ Сначала добавьте сотрудников в смену');
+                return;
+            }
+            state.employees.forEach(emp => {
+                let p = state.contest.participants.find(x => x.name.trim().toLowerCase() === emp.name.trim().toLowerCase());
+                if (!p) {
+                    p = {
+                        id: 'p_' + Date.now() + Math.random().toString(36).slice(2, 5),
+                        name: emp.name.trim(),
+                        hours: 0,
+                        facts: createEmptyFacts()
+                    };
+                    state.contest.participants.push(p);
+                }
+                p.hours = (parseFloat(p.hours) || 0) + (parseFloat(emp.hours) || 0);
+            });
+            saveState();
+            switchTab('contest');
+            showToast('🏆 Часы сегодняшней смены добавлены в конкурс!');
+        }
+
+        // --- МОДАЛЬНОЕ ОКНО ВВОДА ФАКТА УЧАСТНИКА ---
+        function openFactModal(participantId, defaultMode = 'add', prefillHours = 0) {
+            const p = state.contest.participants.find(x => x.id === participantId);
+            if (!p) return;
+
+            activeFactModalEmpId = participantId;
+            activeFactModalMode = defaultMode;
+
+            document.getElementById('factModalTitle').textContent = `👤 ${p.name}`;
+            renderFactModalInputs(p, prefillHours);
+
+            const modal = document.getElementById('factModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function openFactModalFromDaily(empName, shiftHours) {
+            let p = state.contest.participants.find(x => x.name.trim().toLowerCase() === empName.trim().toLowerCase());
+            if (!p) {
+                p = {
+                    id: 'p_' + Date.now() + Math.random().toString(36).slice(2, 5),
+                    name: empName.trim(),
+                    hours: 0,
+                    facts: createEmptyFacts()
+                };
+                state.contest.participants.push(p);
+                saveState();
+            }
+            openFactModal(p.id, 'add', shiftHours);
+        }
+
+        function setFactModalMode(mode) {
+            activeFactModalMode = mode;
+            const p = state.contest.participants.find(x => x.id === activeFactModalEmpId);
+            if (p) renderFactModalInputs(p, 0);
+        }
+
+        function renderFactModalInputs(participant, prefillHours = 0) {
+            const addBtn = document.getElementById('factModeAddBtn');
+            const setBtn = document.getElementById('factModeSetBtn');
+            const hoursLabel = document.getElementById('factModalHoursLabel');
+            const hoursInput = document.getElementById('factModalHoursInput');
+
+            if (activeFactModalMode === 'add') {
+                addBtn.className = 'py-2 rounded-lg transition bg-emerald-500 text-slate-950 font-extrabold';
+                setBtn.className = 'py-2 rounded-lg transition text-slate-400';
+                hoursLabel.textContent = '⏱ Прибавить часов за смену:';
+                hoursInput.value = prefillHours || '';
+                hoursInput.placeholder = '0';
+            } else {
+                addBtn.className = 'py-2 rounded-lg transition text-slate-400';
+                setBtn.className = 'py-2 rounded-lg transition bg-indigo-600 text-white font-extrabold';
+                hoursLabel.textContent = '⏱ Всего часов за период:';
+                hoursInput.value = participant.hours || 0;
+            }
+
+            const container = document.getElementById('factModalMetricsInputs');
+            container.innerHTML = CORE_METRICS.map(m => {
+                const currentFact = (participant.facts && participant.facts[m.id]) || 0;
+                const inputVal = activeFactModalMode === 'set' ? currentFact : '';
+                const placeholderText = activeFactModalMode === 'add' ? `+ к ${formatNumber(currentFact)}` : '0';
+                return `
+                    <div class="flex items-center justify-between bg-[#0b0e14] px-3 py-2 rounded-xl border border-slate-800">
+                        <div>
+                            <div class="text-xs font-bold text-slate-200">${m.icon} ${m.name}</div>
+                            <div class="text-[10px] text-slate-500">Сейчас в таблице: ${formatNumber(currentFact)}</div>
+                        </div>
+                        <input type="number" inputmode="decimal" id="modalFact_${m.id}" value="${inputVal}" placeholder="${placeholderText}"
+                            class="w-32 bg-[#151923] border border-slate-700 rounded-lg px-2.5 py-1.5 text-right font-extrabold text-emerald-400 focus:outline-none focus:border-emerald-500">
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function saveFactModal() {
+            const p = state.contest.participants.find(x => x.id === activeFactModalEmpId);
+            if (!p) return;
+
+            const hoursVal = parseFloat(document.getElementById('factModalHoursInput').value) || 0;
+            if (activeFactModalMode === 'add') {
+                p.hours = (parseFloat(p.hours) || 0) + hoursVal;
+            } else {
+                p.hours = hoursVal;
+            }
+
+            if (!p.facts) p.facts = createEmptyFacts();
+            CORE_METRICS.forEach(m => {
+                const rawVal = document.getElementById('modalFact_' + m.id).value;
+                const numVal = parseFloat(rawVal) || 0;
+                if (activeFactModalMode === 'add') {
+                    p.facts[m.id] = (parseFloat(p.facts[m.id]) || 0) + numVal;
+                } else {
+                    p.facts[m.id] = rawVal === '' ? 0 : numVal;
+                }
+            });
+
+            saveState();
+            closeFactModal();
+            renderAll();
+            showToast(`✅ Результат (${p.name}) сохранен!`);
+        }
+
+        function closeFactModal() {
+            const modal = document.getElementById('factModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function openAddContestParticipantModal() {
+            document.getElementById('newContestEmpName').value = '';
+            const modal = document.getElementById('addParticipantModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => document.getElementById('newContestEmpName').focus(), 50);
+        }
+
+        function closeAddContestParticipantModal() {
+            const modal = document.getElementById('addParticipantModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function confirmAddContestParticipant() {
+            const name = document.getElementById('newContestEmpName').value.trim();
+            if (!name) {
+                showToast('⚠️ Введите имя участника');
+                return;
+            }
+            state.contest.participants.push({
+                id: 'p_' + Date.now(),
+                name,
+                hours: 0,
+                facts: createEmptyFacts()
+            });
+            saveState();
+            closeAddContestParticipantModal();
+            renderContestSection();
+            showToast(`👤 ${name} добавлен в конкурс`);
+        }
+
+        function removeContestParticipant(id) {
+            state.contest.participants = state.contest.participants.filter(x => x.id !== id);
+            saveState();
+            renderContestSection();
+        }
+
+        // --- ВКЛАДКА 3: СИНХРОНИЗАЦИЯ С GOOGLE ТАБЛИЦЕЙ ---
+        function saveGoogleScriptUrl(url) {
+            state.googleScriptUrl = url.trim();
+            saveState();
+        }
+
+        async function syncToGoogleSheets() {
+            const url = (state.googleScriptUrl || '').trim();
+            if (!url || !url.startsWith('https://')) {
+                switchTab('cloud');
+                showToast('⚠️ Вставьте ссылку на скрипт Google Таблицы');
+                return;
+            }
+
+            const statusText = document.getElementById('syncStatusText');
+            statusText.textContent = '⏳ Выгрузка данных в Google Таблицу...';
+
+            try {
+                await fetch(url, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(state)
+                });
+                const nowStr = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                state.lastSync = `Синхр. в ${nowStr}`;
+                saveState();
+                statusText.textContent = '✅ Данные отправлены в Google Таблицу!';
+                document.getElementById('lastSyncTime').textContent = state.lastSync;
+                showToast('☁️ Сохранено в Google Таблицу!');
+            } catch (err) {
+                statusText.textContent = '❌ Ошибка соединения со скриптом';
+                showToast('❌ Не удалось отправить данные');
+            }
+        }
+
+        async function loadFromGoogleSheets() {
+            const url = (state.googleScriptUrl || '').trim();
+            if (!url || !url.startsWith('https://')) {
+                showToast('⚠️ Сначала укажите ссылку на Google Apps Script');
+                return;
+            }
+
+            const statusText = document.getElementById('syncStatusText');
+            statusText.textContent = '⏳ Загрузка данных из Google Таблицы...';
+
+            try {
+                const res = await fetch(url);
+                const cloudData = await res.json();
+                if (cloudData && cloudData.metrics && cloudData.contest) {
+                    const keepUrl = state.googleScriptUrl;
+                    state = { ...defaultState, ...cloudData, googleScriptUrl: keepUrl };
+                    const nowStr = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                    state.lastSync = `Загружено в ${nowStr}`;
+                    saveState();
+                    renderAll();
+                    statusText.textContent = '✅ Данные успешно загружены из таблицы!';
+                    showToast('⬇️ Данные из Google Таблицы загружены!');
+                } else {
+                    statusText.textContent = 'ℹ️ Таблица пока пуста. Сначала нажмите «Сохранить в Таблицу».';
+                    showToast('ℹ️ В таблице еще нет сохраненных данных');
+                }
+            } catch (err) {
+                statusText.textContent = '❌ Ошибка чтения. Проверьте доступ «Все (Anyone)» в Apps Script';
+                showToast('❌ Ошибка чтения из Google Таблицы');
+            }
+        }
+
+        function copyAppsScriptCode() {
+            const code = document.getElementById('appsScriptCodeBlock').innerText;
+            const temp = document.createElement('textarea');
+            temp.value = code;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToast('📋 Код скрипта скопирован!');
+        }
+
+        // --- ОБРАБОТЧИКИ ДНЕВНОГО ПЛАНА ---
+        function updateDate(val) { state.date = val; saveState(); renderChatPreview(); }
+        function updateStoreName(val) { state.storeName = val; saveState(); renderChatPreview(); }
+        function toggleRounding(isInt) { state.roundToInteger = isInt; saveState(); renderAll(); }
+        function toggleHideZero(checked) {
+            state.hideZeroMetrics = checked;
+            saveState();
+            const dist = calculateDistribution();
+            renderEmployees(dist);
+            renderChatPreview(dist);
+        }
+        function setTemplateStyle(style) {
+            state.templateStyle = style;
+            saveState();
+            renderTemplateButtons();
+            renderChatPreview();
+        }
+        function updateMetricTarget(id, value) {
+            const metric = state.metrics.find(m => m.id === id);
+            if (!metric) return;
+            metric.target = value === '' ? 0 : parseFloat(value);
+            saveState();
+            const dist = calculateDistribution();
+            renderEmployees(dist);
+            renderChatPreview(dist);
+        }
+        function clearMetricValues() {
+            state.metrics.forEach(m => m.target = 0);
+            saveState();
+            renderAll();
+            showToast('🧹 Цифры дневного плана обнулены');
+        }
+        function setQuickHours(h) { document.getElementById('newEmpHours').value = h; }
+        function focusHours() {
+            const el = document.getElementById('newEmpHours');
+            el.focus();
+            el.select();
+        }
+        function addEmployeeFromForm() {
+            const nameInput = document.getElementById('newEmpName');
+            const hoursInput = document.getElementById('newEmpHours');
+            const name = nameInput.value.trim();
+            const hours = parseFloat(hoursInput.value);
+            if (!name) { nameInput.focus(); showToast('⚠️ Введите имя сотрудника'); return; }
+            if (isNaN(hours) || hours <= 0) { hoursInput.focus(); showToast('⚠️ Укажите часы'); return; }
+            addEmployee(name, hours);
+            nameInput.value = '';
+            nameInput.focus();
+        }
+        function addEmployee(name, hours) {
+            state.employees.push({
+                id: 'e_' + Date.now() + Math.random().toString(36).slice(2, 5),
+                name,
+                hours
+            });
+            if (!state.savedStaff.some(s => s.toLowerCase() === name.toLowerCase()) && name.length >= 2) {
+                state.savedStaff.push(name);
+            }
+            saveState();
+            renderAll();
+        }
+        function quickAddSavedStaff(name) {
+            const defaultHours = parseFloat(document.getElementById('newEmpHours').value) || 12;
+            if (state.employees.some(e => e.name.trim().toLowerCase() === name.trim().toLowerCase())) {
+                showToast(`ℹ️ ${name} уже в смене`);
+                return;
+            }
+            addEmployee(name, defaultHours);
+        }
+        function removeSavedStaff(name) {
+            state.savedStaff = state.savedStaff.filter(s => s !== name);
+            saveState();
+            renderSavedStaffChips();
+        }
+        function updateEmployee(id, field, value) {
+            const emp = state.employees.find(e => e.id === id);
+            if (!emp) return;
+            if (field === 'hours') {
+                emp.hours = value === '' ? 0 : parseFloat(value);
+                saveState();
+                renderAll();
+            } else {
+                emp.name = value;
+                saveState();
+                renderChatPreview();
+            }
+        }
+        function stepEmpHours(id, delta) {
+            const emp = state.employees.find(e => e.id === id);
+            if (!emp) return;
+            emp.hours = Math.max(0.5, Math.min(24, (parseFloat(emp.hours) || 0) + delta));
+            saveState();
+            renderAll();
+        }
+        function removeEmployee(id) {
+            state.employees = state.employees.filter(e => e.id !== id);
+            saveState();
+            renderAll();
+        }
+
+        // --- КОПИРОВАНИЕ И СБРОС ---
+        function copyTextFromElement(elementId, toastMsg) {
+            const el = document.getElementById(elementId);
+            el.select();
+            el.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+            } catch (e) {
+                if (navigator.clipboard) navigator.clipboard.writeText(el.value);
+            }
+            window.getSelection().removeAllRanges();
+            el.blur();
+            showToast(toastMsg);
+        }
+
+        function openResetModal() {
+            const modal = document.getElementById('resetModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        function closeResetModal() {
+            const modal = document.getElementById('resetModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        function resetShiftOnly() {
+            state.date = getTodayString();
+            state.employees = [];
+            saveState();
+            closeResetModal();
+            renderAll();
+            showToast('🧹 Сегодняшняя смена очищена');
+        }
+        function resetContestScoresOnly() {
+            state.contest.startDate = getTodayString();
+            state.contest.participants.forEach(p => {
+                p.hours = 0;
+                p.facts = createEmptyFacts();
+            });
+            saveState();
+            closeResetModal();
+            renderAll();
+            showToast('🏆 Факты и часы конкурса обнулены для нового периода');
+        }
+        function resetFullDemo() {
+            const keepUrl = state.googleScriptUrl;
+            state = JSON.parse(JSON.stringify(defaultState));
+            state.googleScriptUrl = keepUrl;
+            saveState();
+            closeResetModal();
+            renderAll();
+            showToast('🔄 Демо-пример восстановлен');
+        }
+
+        let toastTimer = null;
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastText').textContent = message;
+            toast.classList.remove('opacity-0', '-translate-y-3');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-3');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+            }, 2500);
+        }
+
+        function escapeHtml(str) {
+            if (typeof str !== 'string') return '';
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        }
+
+        window.onload = function() {
+            switchTab(state.activeTab || 'daily');
+        };
+    </script>
+</body>
+</html>
