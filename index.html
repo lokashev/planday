@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>План на день — распределение по смене</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Golos+Text:wght@400;500;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0B151A; --panel:#10202A; --panel2:#0C1820;
+  --line:#1E3742; --line2:#2C4B58;
+  --ink:#EAF4F5; --mut:#8AA6AF; --dim:#5E7B85;
+  --amber:#FFB454; --mint:#5EEAD4; --sky:#7DD3FC;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:'Golos Text',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+::selection{background:rgba(255,180,84,.35)}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+   linear-gradient(rgba(148,190,205,.035) 1px,transparent 1px) 0 0/100% 46px,
+   linear-gradient(90deg,rgba(148,190,205,.035) 1px,transparent 1px) 0 0/46px 100%;
+  -webkit-mask-image:radial-gradient(1200px at 50% 0%,#000 40%,transparent 100%);
+          mask-image:radial-gradient(1200px at 50% 0%,#000 40%,transparent 100%);
+}
+.glow{position:fixed;border-radius:50%;pointer-events:none;z-index:0}
+.g1{width:760px;height:760px;left:-220px;top:-260px;background:radial-gradient(circle,rgba(94,234,212,.10),transparent 65%);animation:drift 26s ease-in-out infinite alternate}
+.g2{width:820px;height:820px;right:-260px;top:120px;background:radial-gradient(circle,rgba(255,180,84,.09),transparent 65%);animation:drift 32s ease-in-out infinite alternate-reverse}
+@keyframes drift{to{transform:translate(70px,50px)}}
+
+.ticker{position:relative;z-index:2;overflow:hidden;border-bottom:1px solid var(--line);background:rgba(8,16,20,.7)}
+.tk-track{display:flex;width:max-content;animation:tk 48s linear infinite}
+.tk-track:hover{animation-play-state:paused}
+.tk-set{display:flex;align-items:center;gap:34px;padding:9px 17px;margin-right:34px}
+.tk-set span{font-family:'Unbounded';font-size:10px;letter-spacing:.22em;color:var(--dim);white-space:nowrap}
+.tk-set i{width:6px;height:6px;border-radius:2px;flex:none}
+@keyframes tk{to{transform:translateX(-50%)}}
+
+.wrap{max-width:1240px;margin:0 auto;padding:0 22px;position:relative;z-index:1}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding-top:34px;padding-bottom:26px;flex-wrap:wrap}
+.eyebrow{font-family:'Unbounded';font-size:10px;letter-spacing:.3em;color:var(--mint);margin-bottom:10px}
+h1{font-family:'Unbounded';font-weight:800;font-size:clamp(30px,4.2vw,46px);line-height:1.02}
+h1 em{font-style:normal;color:var(--amber)}
+.date{margin-top:10px;color:var(--mut);font-size:14px}
+.date::before{content:"●";color:var(--amber);font-size:9px;margin-right:8px}
+.top-stats{display:flex;gap:12px}
+.stat{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:12px;padding:12px 18px;min-width:104px;text-align:right;transition:border-color .25s}
+.stat:hover{border-color:var(--line2)}
+.stat-n{display:block;font-family:'JetBrains Mono';font-weight:700;font-size:22px}
+.stat-l{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+
+.grid{display:grid;grid-template-columns:412px 1fr;gap:20px;align-items:start;padding-bottom:56px}
+.col-left{display:flex;flex-direction:column;gap:20px}
+.panel{background:linear-gradient(180deg,#11212B,#0D1922);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 20px 50px -30px rgba(0,0,0,.6)}
+.panel-h{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.panel-h h2{font-family:'Unbounded';font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+.mark{width:10px;height:10px;border-radius:3px;background:var(--c);box-shadow:0 0 14px color-mix(in srgb,var(--c) 60%,transparent)}
+.count{margin-left:auto;font-family:'JetBrains Mono';font-size:12px;color:var(--mut);border:1px solid var(--line);padding:2px 9px;border-radius:99px}
+.live{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:11px;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--mint);animation:pl 1.8s infinite}
+@keyframes pl{0%{box-shadow:0 0 0 0 rgba(94,234,212,.45)}70%{box-shadow:0 0 0 9px rgba(94,234,212,0)}100%{box-shadow:0 0 0 0 rgba(94,234,212,0)}}
+
+.emp-row{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02);margin-bottom:9px;transition:border-color .2s,background .2s;animation:rowIn .3s ease both}
+.emp-row:hover{border-color:color-mix(in srgb,var(--c) 55%,var(--line));background:color-mix(in srgb,var(--c) 6%,transparent)}
+@keyframes rowIn{from{opacity:0;transform:translateX(-8px)}}
+.dot{width:11px;height:11px;border-radius:4px;background:var(--c);flex:none;box-shadow:0 0 10px color-mix(in srgb,var(--c) 50%,transparent)}
+.emp-name{flex:1;font-weight:600;font-size:15px;outline:none;border-bottom:1px dashed transparent;padding:2px 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.emp-name:focus{border-bottom-color:var(--c)}
+.stepper{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:9px;background:var(--panel2)}
+.stepper button{width:28px;height:30px;background:transparent;border:0;color:var(--mut);font-size:15px;cursor:pointer;transition:.15s}
+.stepper button:hover{background:var(--line);color:var(--ink)}
+.hval{min-width:52px;text-align:center;font-family:'JetBrains Mono';font-size:13px;padding:0 4px;outline:none}
+.hval::after{content:" ч";color:var(--dim);font-size:11px}
+.hval:focus{background:rgba(255,255,255,.05);border-radius:6px}
+.del{width:28px;height:28px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--dim);cursor:pointer;font-size:15px;transition:.15s}
+.del:hover{border-color:#7f2d3a;color:#ff8a9b;background:rgba(255,90,110,.08)}
+.add-form{display:grid;grid-template-columns:1fr 76px auto;gap:8px;margin-top:12px}
+input,select{font-family:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus{border-color:var(--mint);box-shadow:0 0 0 3px rgba(94,234,212,.12)}
+#addHours{font-family:'JetBrains Mono';text-align:center}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+
+.plan-row{display:grid;grid-template-columns:36px 1fr 108px 74px;gap:10px;align-items:center;padding:9px 8px;border-radius:12px;transition:background .2s}
+.plan-row:hover{background:rgba(255,255,255,.025)}
+.picon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 12%,transparent);border:1px solid color-mix(in srgb,var(--c) 30%,transparent);color:var(--c)}
+.picon svg{width:18px;height:18px}
+.plabel{font-size:14px;font-weight:600}
+.plabel small{display:block;font-weight:400;font-size:11px;color:var(--dim)}
+.pval{font-family:'JetBrains Mono';font-size:14px;text-align:right}
+.pstep{font-size:12px;padding:8px 6px;color:var(--mut);cursor:pointer}
+.note{margin-top:14px;font-size:12.5px;line-height:1.55;color:var(--mut);border-left:2px solid var(--amber);padding-left:12px}
+.note b{color:var(--amber)}
+
+.share-wrap{margin:6px 0 12px}
+.share-bar{display:flex;height:14px;border-radius:99px;overflow:hidden;background:var(--panel2);border:1px solid var(--line)}
+.share-bar i{display:block;height:100%;background:var(--c);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.share-legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:9px;font-size:12px;color:var(--mut)}
+.share-legend span{display:flex;align-items:center;gap:6px}
+.share-legend i{width:8px;height:8px;border-radius:3px;background:var(--c)}
+.share-legend b{color:var(--ink);font-family:'JetBrains Mono';font-weight:600}
+.fhint{font-size:12px;color:var(--dim);line-height:1.5;margin-bottom:16px;border-left:2px solid var(--mint);padding-left:10px}
+.fhint b{color:var(--mint);font-weight:600}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:14px}
+.emp-card{background:linear-gradient(180deg,#132530,#0E1B23);border:1px solid var(--line);border-top:3px solid var(--c);border-radius:14px;padding:16px 16px 12px;transition:transform .25s,box-shadow .25s;animation:cardIn .4s ease both}
+.emp-card:hover{transform:translateY(-4px);box-shadow:0 18px 36px -18px color-mix(in srgb,var(--c) 45%,#000)}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px) scale(.98)}}
+.emp-card header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.emp-card h3{font-family:'Unbounded';font-size:16px;font-weight:600}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:'JetBrains Mono';font-size:11px;color:var(--mut);border:1px solid var(--line);border-radius:99px;padding:3px 9px;white-space:nowrap}
+.chip.c2{color:var(--c);border-color:color-mix(in srgb,var(--c) 45%,transparent)}
+.chip.c3{color:#7DF2C3;border-color:rgba(94,234,212,.45)}
+.load{height:5px;border-radius:99px;background:var(--panel2);overflow:hidden;margin-bottom:10px}
+.load-fill{height:100%;width:0;background:linear-gradient(90deg,color-mix(in srgb,var(--c) 55%,transparent),var(--c));transition:width .55s cubic-bezier(.4,0,.2,1);border-radius:99px}
+.mrow{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px dashed rgba(148,190,205,.13)}
+.mdot{width:8px;height:8px;border-radius:3px;background:var(--mc);flex:none}
+.mtext{flex:1;min-width:0}
+.mlabel{font-size:12px;color:var(--mut);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mraw{font-size:10px;color:var(--dim);font-family:'JetBrains Mono'}
+.mraw.up{color:color-mix(in srgb,var(--mc) 80%,#fff)}
+.mval{font-family:'JetBrains Mono';font-weight:700;font-size:15px;text-align:right;white-space:nowrap}
+.mval small{font-size:10px;color:var(--dim);font-weight:400;margin-left:2px}
+.fact{width:64px;padding:7px 8px;font-family:'JetBrains Mono';font-size:12.5px;text-align:right;border-radius:8px;flex:none}
+.fact::placeholder{color:var(--dim);font-size:11px}
+.fact.ok{border-color:rgba(94,234,212,.55);color:#7DF2C3;background:rgba(94,234,212,.06)}
+.fact.low{border-color:rgba(255,180,84,.5);color:#FFD9A0;background:rgba(255,180,84,.05)}
+
+.vs{margin-top:20px;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:rgba(255,255,255,.015)}
+.vs-title{font-family:'Unbounded';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
+.vs-head,.vs-row{display:grid;grid-template-columns:14px 1fr 80px 18px 80px 52px 80px;gap:8px;align-items:center}
+.vs-head{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);padding-bottom:4px}
+.vs-head span:nth-child(3),.vs-head span:nth-child(5),.vs-head span:nth-child(7){text-align:right}
+.vs-head span:nth-child(6){text-align:center}
+.vs-row{padding:7px 0;border-top:1px dashed rgba(148,190,205,.12);font-size:13px}
+.vs-row .dot{width:9px;height:9px}
+.vlabel{color:var(--mut)}
+.vplan,.vsum{font-family:'JetBrains Mono';text-align:right}
+.vsum{font-weight:700}
+.varrow{color:var(--dim);text-align:center}
+.vdelta{font-family:'JetBrains Mono';font-size:11.5px;text-align:center;border-radius:99px;padding:2px 0}
+.vdelta.up{color:#7DF2C3;background:rgba(94,234,212,.1)}
+.vdelta.zero{color:var(--dim);background:rgba(148,190,205,.08)}
+.vfact{font-family:'JetBrains Mono';text-align:right;font-weight:600;color:var(--dim)}
+.vfact.ok{color:#7DF2C3}
+.vfact.low{color:#FFD9A0}
+
+.actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.btn{font-family:inherit;font-weight:700;font-size:14px;padding:12px 20px;border-radius:11px;border:1px solid transparent;cursor:pointer;transition:transform .15s,box-shadow .2s,background .2s,color .2s,border-color .2s}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--amber);color:#241403;box-shadow:0 8px 24px -10px rgba(255,180,84,.55)}
+.btn.primary:hover{background:#FFC474;transform:translateY(-1px)}
+.btn.primary.ok{background:var(--mint);color:#04231B}
+.btn.ghost{background:transparent;border-color:var(--line2);color:var(--mut)}
+.btn.ghost:hover{border-color:var(--mint);color:var(--ink)}
+.btn.ghost.ok{border-color:var(--mint);color:var(--mint)}
+.add-form .btn{padding:10px 14px}
+.warn{border:1px solid rgba(255,180,84,.35);background:rgba(255,180,84,.07);color:#FFD9A0;border-radius:12px;padding:12px 14px;font-size:13px;margin-bottom:14px}
+.empty{border:1.5px dashed var(--line2);border-radius:14px;padding:36px 20px;text-align:center;color:var(--dim);font-size:14px}
+.foot{padding-bottom:40px;color:var(--dim);font-size:12.5px;border-top:1px solid var(--line);padding-top:18px}
+@media(max-width:1040px){.grid{grid-template-columns:1fr}}
+@media(max-width:560px){
+  .plan-row{grid-template-columns:32px 1fr 92px 64px}
+  .vs-head,.vs-row{grid-template-columns:12px 1fr 56px 12px 56px 40px 56px;font-size:11.5px}
+  .top-stats{width:100%}.stat{flex:1}
+  .actions .btn{flex:1;text-align:center}
+}
+</style>
+</head>
+<body>
+<div class="glow g1"></div><div class="glow g2"></div>
+
+<div class="ticker"><div class="tk-track" id="tickerTrack"></div></div>
+
+<header class="top wrap">
+  <div>
+    <div class="eyebrow">НАРЯД СМЕНЫ · АВТОРАСПРЕДЕЛЕНИЕ</div>
+    <h1>План <em>на день</em></h1>
+    <div class="date" id="dateLine"></div>
+  </div>
+  <div class="top-stats">
+    <div class="stat"><span class="stat-n" id="statEmp">0</span><span class="stat-l">в смене</span></div>
+    <div class="stat"><span class="stat-n" id="statH">0</span><span class="stat-l">часов</span></div>
+    <div class="stat"><span class="stat-n" id="statRound">0</span><span class="stat-l">округлений ↑</span></div>
+  </div>
+</header>
+
+<main class="wrap grid">
+  <section class="col-left">
+    <div class="panel">
+      <div class="panel-h"><span class="mark" style="--c:var(--mint)"></span><h2>Сотрудники</h2><span class="count" id="empCount">0</span></div>
+      <div id="empList"></div>
+      <form id="addForm" class="add-form" autocomplete="off">
+        <input id="addName" type="text" placeholder="Имя сотрудника" maxlength="20">
+        <input id="addHours" type="number" min="0" max="24" step="0.5" value="8" title="Часов в смене">
+        <button class="btn ghost" type="submit">+ Добавить</button>
+      </form>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span class="mark" style="--c:var(--amber)"></span><h2>Общий план</h2><span class="count" title="Шаг округления вверх — справа от каждого показателя">шаг ↑</span></div>
+      <div id="planList"></div>
+      <p class="note">План делится пропорционально часам и округляется <b>вверх</b> до выбранного шага. Итог по сотрудникам может выйти чуть выше плана — так и задумано: запас прочности.</p>
+    </div>
+  </section>
+
+  <section class="col-right">
+    <div class="panel">
+      <div class="panel-h"><span class="mark" style="--c:var(--sky)"></span><h2>Распределение</h2><span class="live"><span class="pulse"></span>автопересчёт</span></div>
+      <div class="share-wrap">
+        <div class="share-bar" id="shareBar"></div>
+        <div class="share-legend" id="shareLegend"></div>
+      </div>
+      <p class="fhint">✏️ Поле <b>«факт»</b> в карточках — туда вписывается результат дня. Кнопка <b>«План в чат»</b> соберёт сообщение для мессенджера с пустыми местами под факты — сотрудники впишут их прямо в чате.</p>
+      <div id="warnBox"></div>
+      <div class="cards" id="cardsWrap"></div>
+      <div class="vs">
+        <div class="vs-title">Назначено против плана</div>
+        <div class="vs-head"><span></span><span>показатель</span><span>план</span><span></span><span>назначено</span><span>Δ</span><span>факт</span></div>
+        <div id="vsRows"></div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="chatBtn" type="button">📱 План в чат (с фактами)</button>
+        <button class="btn ghost" id="copyBtn" type="button">⧉ Сводка</button>
+        <button class="btn ghost" id="clearFactsBtn" type="button">Стереть факты</button>
+        <button class="btn ghost" id="resetBtn" type="button">Сбросить день</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap foot">Округление — всегда в большую сторону. Если сумма по сотрудникам выше общего плана — это страховой запас, а не ошибка.</footer>
+
+<script>
+const ICONS={
+ sim:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><rect x="9.2" y="12.5" width="6.6" height="5" rx="1"/><path d="M12.5 12.5v5M9.2 15h6.6"/></svg>',
+ ticket:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5h16v3.2a2.3 2.3 0 0 0 0 4.6v3.2H4v-3.2a2.3 2.3 0 0 0 0-4.6V6.5Z"/><path d="M13.5 6.5v11" stroke-dasharray="2.4 2.6"/></svg>',
+ box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20.5 7.5v9L12 21l-8.5-4.5v-9L12 3Z"/><path d="m3.5 7.5 8.5 4.5 8.5-4.5M12 12v9"/></svg>',
+ head:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v-2.5a8 8 0 0 1 16 0V15"/><rect x="3" y="14" width="4.4" height="6.5" rx="1.6"/><rect x="16.6" y="14" width="4.4" height="6.5" rx="1.6"/></svg>',
+ percent:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6"/><circle cx="7.5" cy="7.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>',
+ family:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.2" cy="8" r="3.1"/><circle cx="16" cy="8" r="3.1"/><path d="M2.8 19.5c.4-3 2.7-4.9 5.4-4.9 1.5 0 2.9.6 3.9 1.6M10.7 19.5c.4-3 2.7-4.9 5.4-4.9 2.7 0 5 1.9 5.4 4.9"/></svg>'
+};
+const METRICS=[
+ {id:'sim',  label:'Сим-карты',    unit:'шт', def:10,     color:'#FFB454', icon:ICONS.sim},
+ {id:'abon', label:'Абонементы',   unit:'шт', def:10,     color:'#5EEAD4', icon:ICONS.ticket},
+ {id:'tovar',label:'Товарка',      unit:'₽',  def:200000, color:'#7DD3FC', icon:ICONS.box},
+ {id:'acc',  label:'Аксессуары',   unit:'₽',  def:10000,  color:'#FF9E80', icon:ICONS.head},
+ {id:'fin',  label:'Фин. услуги',  unit:'₽',  def:10000,  color:'#C4B5FD', icon:ICONS.percent},
+ {id:'mega', label:'Мега-семьи',   unit:'шт', def:5,      color:'#F9A8D4', icon:ICONS.family}
+];
+const PALETTE=['#FFB454','#5EEAD4','#7DD3FC','#FF9E80','#C4B5FD','#F9A8D4','#FDE68A','#86EFAC'];
+const EMOJI={'#FFB454':'🟠','#5EEAD4':'🟢','#7DD3FC':'🔵','#FF9E80':'🔴','#C4B5FD':'🟣','#F9A8D4':'🩷','#FDE68A':'🟡','#86EFAC':'🟩'};
+const emojiOf=c=>EMOJI[c]||'🔸';
+const KEY='planboard_v2';
+const uid=()=>Math.random().toString(36).slice(2,9);
+const nf=new Intl.NumberFormat('ru-RU');
+const nf1=new Intl.NumberFormat('ru-RU',{maximumFractionDigits:1});
+const fmt=n=>nf.format(Math.round(Number(n)||0));
+const fmtH=h=>String(Math.round((Number(h)||0)*10)/10).replace('.',',');
+
+function seed(){
+  return {
+    emps:[{id:uid(),name:'Руслан',hours:8,color:PALETTE[0]},{id:uid(),name:'Лиза',hours:8,color:PALETTE[1]}],
+    plan:Object.fromEntries(METRICS.map(m=>[m.id,m.def])),
+    steps:Object.fromEntries(METRICS.map(m=>[m.id,0])),
+    facts:{}
+  };
+}
+/* нормализация: даже из старого/битого хранилища получаем рабочий state */
+function normalize(s){
+  if(!s||!Array.isArray(s.emps))return null;
+  s.plan=s.plan||{};s.steps=s.steps||{};s.facts=s.facts||{};
+  METRICS.forEach(m=>{
+    if(s.plan[m.id]==null||isNaN(Number(s.plan[m.id])))s.plan[m.id]=m.def;
+    if(s.steps[m.id]==null)s.steps[m.id]=0;
+  });
+  s.emps=s.emps.filter(e=>e&&e.id).map(e=>({
+    id:e.id, name:String(e.name||'Без имени'),
+    hours:Math.min(24,Math.max(0,Number(e.hours)||0)),
+    color:e.color||PALETTE[0]
+  }));
+  return s;
+}
+function load(){
+  try{return normalize(JSON.parse(localStorage.getItem(KEY)));}catch(e){return null;}
+}
+function save(){
+  /* хранилище может быть заблокировано (превью, приватный режим) —
+     тогда просто работаем без сохранения, расчёт не должен ломаться */
+  try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+}
+let state=load()||seed();
+
+const factOf=(eid,mid)=>{const f=state.facts[eid]?state.facts[eid][mid]:null;return f==null?null:f};
+function setFact(eid,mid,v){(state.facts[eid]=state.facts[eid]||{})[mid]=v;}
+
+function dateStr(){const s=new Intl.DateTimeFormat('ru-RU',{weekday:'long',day:'numeric',month:'long'}).format(new Date());return s.charAt(0).toUpperCase()+s.slice(1)}
+document.getElementById('dateLine').textContent=dateStr();
+
+(function(){
+  const words=['СИМ-КАРТЫ','АБОНЕМЕНТЫ','ТОВАРКА','АКСЕССУАРЫ','ФИНУСЛУГИ','МЕГА-СЕМЬЯ','ПЛАН','ФАКТ','СМЕНА','РАСПРЕДЕЛЕНИЕ'];
+  const set=words.map((w,i)=>`<span>${w}</span><i style="background:${METRICS[i%METRICS.length].color}"></i>`).join('');
+  document.getElementById('tickerTrack').innerHTML=`<div class="tk-set">${set}</div><div class="tk-set">${set}</div>`;
+})();
+
+function autoStep(raw){
+  if(raw>=200000)return 5000;
+  if(raw>=50000)return 1000;
+  if(raw>=5000)return 500;
+  if(raw>=1000)return 100;
+  if(raw>=100)return 10;
+  return 1;
+}
+const ceilTo=(x,s)=>{s=s||1;return Math.ceil(x/s-1e-9)*s};
+function compute(){
+  const emps=state.emps,totalH=emps.reduce((a,e)=>a+e.hours,0);
+  const res={per:{},sum:{},factSum:{},factAny:{},rounds:0,totalH};
+  for(const m of METRICS){
+    const plan=Number(state.plan[m.id])||0;let sum=0,ft=0,any=false;
+    for(const e of emps){
+      const raw=totalH>0?plan*e.hours/totalH:0;
+      const step=Number(state.steps[m.id])||autoStep(raw);
+      const val=raw>0?ceilTo(raw,step):0;
+      if(val>raw)res.rounds++;
+      (res.per[e.id]=res.per[e.id]||{})[m.id]={raw,val};
+      sum+=val;
+      const f=factOf(e.id,m.id);
+      if(f!=null){ft+=f;any=true;}
+    }
+    res.sum[m.id]=sum;res.factSum[m.id]=ft;res.factAny[m.id]=any;
+  }
+  return res;
+}
+
+/* панель плана */
+const planList=document.getElementById('planList');
+planList.innerHTML=METRICS.map(m=>`
+ <div class="plan-row" style="--c:${m.color}">
+  <span class="picon">${m.icon}</span>
+  <div class="plabel">${m.label}<small>план на всех, ${m.unit}</small></div>
+  <input class="pval" data-m="${m.id}" inputmode="numeric">
+  <select class="pstep" data-m="${m.id}" title="Шаг округления вверх">
+    ${[0,1,10,100,500,1000,5000].map(s=>`<option value="${s}">${s?'×'+s:'авто'}</option>`).join('')}
+  </select>
+ </div>`).join('');
+function refreshPlanInputs(){
+  METRICS.forEach(m=>{
+    document.querySelector(`.pval[data-m="${m.id}"]`).value=fmt(state.plan[m.id]);
+    document.querySelector(`.pstep[data-m="${m.id}"]`).value=state.steps[m.id];
+  });
+}
+planList.addEventListener('input',e=>{
+  const el=e.target.closest('.pval');if(!el)return;
+  state.plan[el.dataset.m]=parseInt(el.value.replace(/\D/g,''),10)||0;
+  update();   /* сначала пересчёт — он главный */
+  save();
+});
+planList.addEventListener('blur',e=>{
+  const el=e.target.closest('.pval');
+  if(el)el.value=fmt(state.plan[el.dataset.m]);
+},true);
+planList.addEventListener('change',e=>{
+  if(e.target.classList.contains('pstep')){state.steps[e.target.dataset.m]=+e.target.value;update();save();}
+});
+
+/* сотрудники */
+const empList=document.getElementById('empList');
+function renderEmps(){
+  empList.innerHTML=state.emps.map(e=>`
+   <div class="emp-row" data-id="${e.id}" style="--c:${e.color}">
+    <span class="dot"></span>
+    <span class="emp-name" contenteditable="true" spellcheck="false"></span>
+    <div class="stepper">
+      <button type="button" data-a="-" title="−0,5 ч">−</button>
+      <span class="hval" contenteditable="true" spellcheck="false">${fmtH(e.hours)}</span>
+      <button type="button" data-a="+" title="+0,5 ч">+</button>
+    </div>
+    <button class="del" type="button" title="Убрать из смены">×</button>
+   </div>`).join('');
+  empList.querySelectorAll('.emp-row').forEach(row=>{
+    const e=state.emps.find(x=>x.id===row.dataset.id);
+    if(e)row.querySelector('.emp-name').textContent=e.name;
+  });
+  document.getElementById('empCount').textContent=state.emps.length;
+}
+empList.addEventListener('click',e=>{
+  const row=e.target.closest('.emp-row');if(!row)return;
+  const emp=state.emps.find(x=>x.id===row.dataset.id);if(!emp)return;
+  if(e.target.classList.contains('del')){
+    state.emps=state.emps.filter(x=>x!==emp);
+    delete state.facts[emp.id];
+    structure();update();save();return;
+  }
+  const b=e.target.closest('.stepper button');
+  if(b){emp.hours=Math.min(24,Math.max(0,emp.hours+(b.dataset.a==='+'?0.5:-0.5)));renderEmps();update();save();}
+});
+empList.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();e.target.blur();}});
+empList.addEventListener('blur',e=>{
+  const row=e.target.closest('.emp-row');if(!row)return;
+  const emp=state.emps.find(x=>x.id===row.dataset.id);if(!emp)return;
+  if(e.target.classList.contains('emp-name')){
+    emp.name=e.target.textContent.trim()||'Без имени';
+    e.target.textContent=emp.name;update();save();
+  }
+  if(e.target.classList.contains('hval')){
+    let v=parseFloat(e.target.textContent.replace(',','.').replace(/[^\d.]/g,''));
+    if(isNaN(v))v=emp.hours;
+    emp.hours=Math.min(24,Math.max(0,Math.round(v*2)/2));
+    renderEmps();update();save();
+  }
+},true);
+
+const addForm=document.getElementById('addForm'),addName=document.getElementById('addName'),addHours=document.getElementById('addHours');
+function nextColor(){const used=new Set(state.emps.map(e=>e.color));return PALETTE.find(c=>!used.has(c))||PALETTE[state.emps.length%PALETTE.length]}
+addForm.addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=addName.value.trim();
+  if(!name){addName.style.borderColor='#ff8a9b';addName.focus();setTimeout(()=>addName.style.borderColor='',700);return;}
+  if(state.emps.length>=12){alert('Максимум 12 сотрудников');return;}
+  let h=parseFloat(addHours.value);h=isNaN(h)?8:Math.min(24,Math.max(0,Math.round(h*2)/2));
+  state.emps.push({id:uid(),name,hours:h,color:nextColor()});
+  addName.value='';structure();update();save();addName.focus();
+});
+
+/* карточки */
+const cardsWrap=document.getElementById('cardsWrap');
+let builtIds=['—'];
+function empCardHTML(e){
+  return `<article class="emp-card" data-card="${e.id}" style="--c:${e.color}">
+   <header><h3></h3><div class="chips"><span class="chip h-chip"></span><span class="chip c2 p-chip"></span><span class="chip c3 f-chip" style="display:none"></span></div></header>
+   <div class="load"><div class="load-fill"></div></div>
+   <div class="mrows">${METRICS.map(m=>`
+    <div class="mrow" data-m="${m.id}" style="--mc:${m.color}">
+      <span class="mdot"></span>
+      <div class="mtext"><span class="mlabel">${m.label}</span><span class="mraw"></span></div>
+      <div class="mval"><b data-v="${m.id}">0</b><small>${m.unit}</small></div>
+      <input class="fact" data-f="${m.id}" inputmode="numeric" placeholder="факт" title="Факт сотрудника — впишите число">
+    </div>`).join('')}
+   </div>
+  </article>`;
+}
+function syncShare(){
+  document.getElementById('shareBar').innerHTML=state.emps.map(e=>`<i style="--c:${e.color};width:0"></i>`).join('');
+  document.getElementById('shareLegend').innerHTML=state.emps.map(e=>`<span><i style="--c:${e.color}"></i>${e.name} · <b class="lg-h">${fmtH(e.hours)}</b></span>`).join('');
+}
+function structure(){
+  const ids=state.emps.map(e=>e.id);
+  if(ids.join()!==builtIds.join()){
+    cardsWrap.innerHTML=state.emps.length?state.emps.map(empCardHTML).join(''):'<div class="empty" style="grid-column:1/-1">Добавьте сотрудников слева — план распределится автоматически.</div>';
+    builtIds=[...ids];
+    syncShare();
+  }
+  cardsWrap.querySelectorAll('.emp-card').forEach(c=>{
+    const e=state.emps.find(x=>x.id===c.dataset.card);if(!e)return;
+    c.style.setProperty('--c',e.color);
+    c.querySelector('h3').textContent=e.name;
+    c.querySelectorAll('.fact').forEach(inp=>{
+      const f=factOf(e.id,inp.dataset.f);
+      inp.value=f==null?'':fmt(f);
+    });
+  });
+}
+
+/* ввод фактов */
+cardsWrap.addEventListener('input',e=>{
+  const el=e.target.closest('.fact');if(!el)return;
+  const eid=el.closest('.emp-card').dataset.card;
+  const digits=el.value.replace(/\D/g,'');
+  setFact(eid,el.dataset.f,digits===''?null:parseInt(digits,10));
+  update();save();
+});
+cardsWrap.addEventListener('blur',e=>{
+  const el=e.target.closest('.fact');if(!el)return;
+  const eid=el.closest('.emp-card').dataset.card;
+  const f=factOf(eid,el.dataset.f);
+  el.value=f==null?'':fmt(f);
+},true);
+cardsWrap.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.classList.contains('fact')){e.preventDefault();e.target.blur();}
+});
+
+/* таблица план/факт */
+const vsRows=document.getElementById('vsRows');
+vsRows.innerHTML=METRICS.map(m=>`
+ <div class="vs-row" style="--c:${m.color}">
+  <span class="dot"></span><span class="vlabel">${m.label}</span>
+  <span class="vplan" id="vp-${m.id}"></span><span class="varrow">→</span>
+  <span class="vsum" id="vs-${m.id}"></span><span class="vdelta" id="vd-${m.id}"></span><span class="vfact" id="vf-${m.id}">—</span>
+ </div>`).join('');
+
+/* анимация чисел */
+const prev={};
+function setNum(el,key,to){
+  if(!el)return;
+  to=Number(to)||0;
+  const from=prev[key]??to;prev[key]=to;
+  if(el._raf)cancelAnimationFrame(el._raf);
+  const t0=performance.now(),D=420;
+  const step=t=>{
+    const p=Math.min(1,(t-t0)/D),ease=1-Math.pow(1-p,3);
+    el.textContent=fmt(Math.round(from+(to-from)*ease));
+    if(p<1)el._raf=requestAnimationFrame(step);
+  };
+  el._raf=requestAnimationFrame(step);
+}
+
+function update(){
+  const r=compute();
+  document.getElementById('statEmp').textContent=state.emps.length;
+  document.getElementById('statH').textContent=fmtH(r.totalH);
+  document.getElementById('statRound').textContent=r.rounds;
+  document.getElementById('warnBox').innerHTML=
+    (state.emps.length&&r.totalH===0)?'<div class="warn">У всех сотрудников 0 часов — укажите рабочее время, иначе план не распределить.</div>':'';
+  const segs=document.querySelectorAll('#shareBar i'),legs=document.querySelectorAll('#shareLegend .lg-h');
+  state.emps.forEach((e,i)=>{
+    if(segs[i])segs[i].style.width=(r.totalH?e.hours/r.totalH*100:0)+'%';
+    if(legs[i])legs[i].textContent=fmtH(e.hours);
+  });
+  state.emps.forEach(e=>{
+    const c=cardsWrap.querySelector(`[data-card="${e.id}"]`);if(!c||!r.per[e.id])return;
+    const share=r.totalH?e.hours/r.totalH:0;
+    c.querySelector('.h-chip').textContent=fmtH(e.hours)+' ч';
+    c.querySelector('.p-chip').textContent=Math.round(share*100)+'% смены';
+    c.querySelector('.load-fill').style.width=(share*100)+'%';
+    let filled=0,pctSum=0;
+    METRICS.forEach(m=>{
+      const cell=r.per[e.id][m.id];
+      const row=c.querySelector(`.mrow[data-m="${m.id}"]`);if(!row)return;
+      setNum(row.querySelector('b'),e.id+m.id,cell.val);
+      const raw=row.querySelector('.mraw');
+      if(cell.raw===0){raw.textContent='—';raw.className='mraw';}
+      else if(cell.val>cell.raw){raw.textContent='расчёт '+nf1.format(cell.raw)+' → ↑';raw.className='mraw up';}
+      else{raw.textContent='точно в план';raw.className='mraw';}
+      const fEl=row.querySelector('.fact'),f=factOf(e.id,m.id);
+      fEl.classList.toggle('ok',f!=null&&cell.val>0&&f>=cell.val);
+      fEl.classList.toggle('low',f!=null&&cell.val>0&&f<cell.val);
+      if(f!=null&&(cell.val>0||f>0)){filled++;pctSum+=cell.val>0?Math.min(f/cell.val,1.5):1;}
+    });
+    const chip=c.querySelector('.f-chip');
+    if(filled){chip.style.display='';chip.textContent='факт '+Math.round(pctSum/filled*100)+'%';}
+    else chip.style.display='none';
+  });
+  METRICS.forEach(m=>{
+    document.getElementById('vp-'+m.id).textContent=fmt(state.plan[m.id]);
+    setNum(document.getElementById('vs-'+m.id),'vs'+m.id,r.sum[m.id]);
+    const d=r.sum[m.id]-(Number(state.plan[m.id])||0),el=document.getElementById('vd-'+m.id);
+    el.textContent=d>0?'+'+fmt(d):'0';
+    el.className='vdelta '+(d>0?'up':'zero');
+    const fEl=document.getElementById('vf-'+m.id);
+    fEl.textContent=r.factAny[m.id]?fmt(r.factSum[m.id]):'—';
+    fEl.className='vfact'+(r.factAny[m.id]?(r.factSum[m.id]>=(Number(state.plan[m.id])||0)?' ok':' low'):'');
+  });
+}
+
+/* копирование */
+async function copyText(text,btn,okLabel,defLabel){
+  try{await navigator.clipboard.writeText(text);}
+  catch(err){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e2){}ta.remove();}
+  btn.classList.add('ok');btn.textContent=okLabel;
+  setTimeout(()=>{btn.classList.remove('ok');btn.textContent=defLabel;},1700);
+}
+
+/* 📱 план в чат — с местами под факты */
+const chatBtn=document.getElementById('chatBtn');
+chatBtn.onclick=()=>{
+  const r=compute(),L=[];
+  L.push('📋 ПЛАН НА СМЕНУ');
+  L.push('🗓 '+dateStr());
+  L.push(`👥 Смена: ${state.emps.length} чел · ${fmtH(r.totalH)} ч`);
+  L.push('');
+  state.emps.forEach(e=>{
+    const p=r.totalH?Math.round(e.hours/r.totalH*100):0;
+    L.push('─────────────────');
+    L.push(`${emojiOf(e.color)} ${e.name.toUpperCase()} · ${fmtH(e.hours)} ч (${p}% смены)`);
+    L.push('');
+    METRICS.forEach(m=>{
+      const cell=r.per[e.id][m.id];
+      const f=factOf(e.id,m.id);
+      L.push(`▫️ ${m.label} — план: ${fmt(cell.val)} ${m.unit}`);
+      if(f!=null){
+        const done=cell.val>0&&f>=cell.val;
+        L.push(`   ✏️ факт: ${fmt(f)} ${m.unit} ${done?'✅':'⚠️ −'+fmt(cell.val-f)}`);
+      }else{
+        L.push('   ✏️ факт: ______________');
+      }
+    });
+    L.push('');
+  });
+  L.push('─────────────────');
+  L.push('📌 ИТОГО НАЗНАЧЕНО (округление вверх):');
+  METRICS.forEach(m=>L.push(`   ${m.label}: план ${fmt(state.plan[m.id])} → ${fmt(r.sum[m.id])} ${m.unit}`));
+  L.push('');
+  L.push('✏️ Сотрудник: впиши свой факт вместо прочерков и верни это сообщение в чат до конца смены.');
+  copyText(L.join('\n'),chatBtn,'📱 Скопировано!','📱 План в чат (с фактами)');
+};
+
+/* ⧉ сводка для руководителя */
+const copyBtn=document.getElementById('copyBtn');
+copyBtn.onclick=()=>{
+  const r=compute(),L=[];
+  L.push('📋 ПЛАН НА СМЕНУ — '+dateStr());
+  L.push(`👥 Смена: ${state.emps.length} чел · ${fmtH(r.totalH)} ч`);
+  L.push('');
+  state.emps.forEach(e=>{
+    const p=r.totalH?Math.round(e.hours/r.totalH*100):0;
+    L.push(`▪️ ${e.name} — ${fmtH(e.hours)} ч (${p}%)`);
+    METRICS.forEach(m=>L.push(`   ${m.label}: ${fmt(r.per[e.id][m.id].val)} ${m.unit}`));
+    L.push('');
+  });
+  L.push('Итого назначено (с запасом):');
+  METRICS.forEach(m=>{
+    const d=r.sum[m.id]-(Number(state.plan[m.id])||0);
+    let line=`   ${m.label}: план ${fmt(state.plan[m.id])} → ${fmt(r.sum[m.id])} ${m.unit}${d>0?` (+${fmt(d)})`:''}`;
+    if(r.factAny[m.id])line+=` | факт: ${fmt(r.factSum[m.id])}`;
+    L.push(line);
+  });
+  copyText(L.join('\n'),copyBtn,'✓ Скопировано','⧉ Сводка');
+};
+
+/* стирание фактов / сброс */
+document.getElementById('clearFactsBtn').onclick=()=>{
+  state.facts={};builtIds=['—'];structure();update();save();
+};
+document.getElementById('resetBtn').onclick=()=>{
+  if(!confirm('Сбросить всё к примеру и начать заново?'))return;
+  state=seed();builtIds=['—'];
+  refreshPlanInputs();renderEmps();structure();update();save();
+};
+
+/* защита от зависшего ввода: любое изменение плана дополнительно пересчитываем по событию change */
+planList.addEventListener('change',e=>{
+  const el=e.target.closest('.pval');if(!el)return;
+  state.plan[el.dataset.m]=parseInt(el.value.replace(/\D/g,''),10)||0;
+  el.value=fmt(state.plan[el.dataset.m]);
+  update();save();
+});
+
+refreshPlanInputs();renderEmps();structure();update();
+</script>
+</body>
+</html>
