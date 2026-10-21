@@ -15,7 +15,7 @@
   --ink:#EAF4F5; --mut:#8AA6AF; --dim:#5E7B85;
   --amber:#FFB454; --mint:#5EEAD4; --sky:#7DD3FC;
 }
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{background:var(--bg);color:var(--ink);font-family:'Golos Text',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
 ::selection{background:rgba(255,180,84,.35)}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
@@ -41,7 +41,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
 .wrap{max-width:1240px;margin:0 auto;padding:0 22px;position:relative;z-index:1}
 .top{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding-top:34px;padding-bottom:26px;flex-wrap:wrap}
 .eyebrow{font-family:'Unbounded';font-size:10px;letter-spacing:.3em;color:var(--mint);margin-bottom:10px}
-h1{font-family:'Unbounded';font-weight:800;font-size:clamp(30px,4.2vw,46px);line-height:1.02}
+h1{font-family:'Unbounded';font-weight:800;font-size:clamp(26px,4.2vw,46px);line-height:1.05}
 h1 em{font-style:normal;color:var(--amber)}
 .date{margin-top:10px;color:var(--mut);font-size:14px}
 .date::before{content:"●";color:var(--amber);font-size:9px;margin-right:8px}
@@ -51,9 +51,10 @@ h1 em{font-style:normal;color:var(--amber)}
 .stat-n{display:block;font-family:'JetBrains Mono';font-weight:700;font-size:22px}
 .stat-l{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
 
-.grid{display:grid;grid-template-columns:412px 1fr;gap:20px;align-items:start;padding-bottom:56px}
-.col-left{display:flex;flex-direction:column;gap:20px}
-.panel{background:linear-gradient(180deg,#11212B,#0D1922);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 20px 50px -30px rgba(0,0,0,.6)}
+.grid{display:grid;grid-template-columns:412px minmax(0,1fr);gap:20px;align-items:start;padding-bottom:56px}
+.col-left{display:flex;flex-direction:column;gap:20px;min-width:0}
+.col-right{min-width:0}
+.panel{background:linear-gradient(180deg,#11212B,#0D1922);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 20px 50px -30px rgba(0,0,0,.6);min-width:0}
 .panel-h{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 .panel-h h2{font-family:'Unbounded';font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
 .mark{width:10px;height:10px;border-radius:3px;background:var(--c);box-shadow:0 0 14px color-mix(in srgb,var(--c) 60%,transparent)}
@@ -68,26 +69,26 @@ h1 em{font-style:normal;color:var(--amber)}
 .dot{width:11px;height:11px;border-radius:4px;background:var(--c);flex:none;box-shadow:0 0 10px color-mix(in srgb,var(--c) 50%,transparent)}
 .emp-name{flex:1;font-weight:600;font-size:15px;outline:none;border-bottom:1px dashed transparent;padding:2px 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .emp-name:focus{border-bottom-color:var(--c)}
-.stepper{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:9px;background:var(--panel2)}
+.stepper{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:9px;background:var(--panel2);flex:none}
 .stepper button{width:28px;height:30px;background:transparent;border:0;color:var(--mut);font-size:15px;cursor:pointer;transition:.15s}
 .stepper button:hover{background:var(--line);color:var(--ink)}
 .hval{min-width:52px;text-align:center;font-family:'JetBrains Mono';font-size:13px;padding:0 4px;outline:none}
 .hval::after{content:" ч";color:var(--dim);font-size:11px}
 .hval:focus{background:rgba(255,255,255,.05);border-radius:6px}
-.del{width:28px;height:28px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--dim);cursor:pointer;font-size:15px;transition:.15s}
+.del{width:28px;height:28px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--dim);cursor:pointer;font-size:15px;transition:.15s;flex:none}
 .del:hover{border-color:#7f2d3a;color:#ff8a9b;background:rgba(255,90,110,.08)}
-.add-form{display:grid;grid-template-columns:1fr 76px auto;gap:8px;margin-top:12px}
-input,select{font-family:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+.add-form{display:grid;grid-template-columns:minmax(0,1fr) 76px auto;gap:8px;margin-top:12px}
+input,select{font-family:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;min-width:0}
 input:focus,select:focus{border-color:var(--mint);box-shadow:0 0 0 3px rgba(94,234,212,.12)}
 #addHours{font-family:'JetBrains Mono';text-align:center}
 input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
-.plan-row{display:grid;grid-template-columns:36px 1fr 108px 74px;gap:10px;align-items:center;padding:9px 8px;border-radius:12px;transition:background .2s}
+.plan-row{display:grid;grid-template-columns:36px minmax(0,1fr) 108px 74px;gap:10px;align-items:center;padding:9px 8px;border-radius:12px;transition:background .2s}
 .plan-row:hover{background:rgba(255,255,255,.025)}
 .picon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 12%,transparent);border:1px solid color-mix(in srgb,var(--c) 30%,transparent);color:var(--c)}
 .picon svg{width:18px;height:18px}
-.plabel{font-size:14px;font-weight:600}
+.plabel{font-size:14px;font-weight:600;min-width:0}
 .plabel small{display:block;font-weight:400;font-size:11px;color:var(--dim)}
 .pval{font-family:'JetBrains Mono';font-size:14px;text-align:right}
 .pstep{font-size:12px;padding:8px 6px;color:var(--mut);cursor:pointer}
@@ -98,14 +99,14 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .share-bar{display:flex;height:14px;border-radius:99px;overflow:hidden;background:var(--panel2);border:1px solid var(--line)}
 .share-bar i{display:block;height:100%;background:var(--c);transition:width .5s cubic-bezier(.4,0,.2,1)}
 .share-legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:9px;font-size:12px;color:var(--mut)}
-.share-legend span{display:flex;align-items:center;gap:6px}
-.share-legend i{width:8px;height:8px;border-radius:3px;background:var(--c)}
+.share-legend span{display:flex;align-items:center;gap:6px;min-width:0}
+.share-legend i{width:8px;height:8px;border-radius:3px;background:var(--c);flex:none}
 .share-legend b{color:var(--ink);font-family:'JetBrains Mono';font-weight:600}
 .fhint{font-size:12px;color:var(--dim);line-height:1.5;margin-bottom:16px;border-left:2px solid var(--mint);padding-left:10px}
 .fhint b{color:var(--mint);font-weight:600}
 
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:14px}
-.emp-card{background:linear-gradient(180deg,#132530,#0E1B23);border:1px solid var(--line);border-top:3px solid var(--c);border-radius:14px;padding:16px 16px 12px;transition:transform .25s,box-shadow .25s;animation:cardIn .4s ease both}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,272px),1fr));gap:14px}
+.emp-card{background:linear-gradient(180deg,#132530,#0E1B23);border:1px solid var(--line);border-top:3px solid var(--c);border-radius:14px;padding:16px 16px 12px;transition:transform .25s,box-shadow .25s;animation:cardIn .4s ease both;min-width:0}
 .emp-card:hover{transform:translateY(-4px);box-shadow:0 18px 36px -18px color-mix(in srgb,var(--c) 45%,#000)}
 @keyframes cardIn{from{opacity:0;transform:translateY(12px) scale(.98)}}
 .emp-card header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px;flex-wrap:wrap}
@@ -131,20 +132,20 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 .vs{margin-top:20px;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:rgba(255,255,255,.015)}
 .vs-title{font-family:'Unbounded';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
-.vs-head,.vs-row{display:grid;grid-template-columns:14px 1fr 80px 18px 80px 52px 80px;gap:8px;align-items:center}
+.vs-head,.vs-row{display:grid;grid-template-columns:14px minmax(0,1fr) 80px 18px 80px 52px 80px;gap:8px;align-items:center}
 .vs-head{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);padding-bottom:4px}
 .vs-head span:nth-child(3),.vs-head span:nth-child(5),.vs-head span:nth-child(7){text-align:right}
 .vs-head span:nth-child(6){text-align:center}
 .vs-row{padding:7px 0;border-top:1px dashed rgba(148,190,205,.12);font-size:13px}
 .vs-row .dot{width:9px;height:9px}
-.vlabel{color:var(--mut)}
-.vplan,.vsum{font-family:'JetBrains Mono';text-align:right}
+.vlabel{color:var(--mut);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vplan,.vsum{font-family:'JetBrains Mono';text-align:right;white-space:nowrap}
 .vsum{font-weight:700}
 .varrow{color:var(--dim);text-align:center}
-.vdelta{font-family:'JetBrains Mono';font-size:11.5px;text-align:center;border-radius:99px;padding:2px 0}
+.vdelta{font-family:'JetBrains Mono';font-size:11.5px;text-align:center;border-radius:99px;padding:2px 0;white-space:nowrap}
 .vdelta.up{color:#7DF2C3;background:rgba(94,234,212,.1)}
 .vdelta.zero{color:var(--dim);background:rgba(148,190,205,.08)}
-.vfact{font-family:'JetBrains Mono';text-align:right;font-weight:600;color:var(--dim)}
+.vfact{font-family:'JetBrains Mono';text-align:right;font-weight:600;color:var(--dim);white-space:nowrap}
 .vfact.ok{color:#7DF2C3}
 .vfact.low{color:#FFD9A0}
 
@@ -161,12 +162,73 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 .warn{border:1px solid rgba(255,180,84,.35);background:rgba(255,180,84,.07);color:#FFD9A0;border-radius:12px;padding:12px 14px;font-size:13px;margin-bottom:14px}
 .empty{border:1.5px dashed var(--line2);border-radius:14px;padding:36px 20px;text-align:center;color:var(--dim);font-size:14px}
 .foot{padding-bottom:40px;color:var(--dim);font-size:12.5px;border-top:1px solid var(--line);padding-top:18px}
-@media(max-width:1040px){.grid{grid-template-columns:1fr}}
-@media(max-width:560px){
-  .plan-row{grid-template-columns:32px 1fr 92px 64px}
-  .vs-head,.vs-row{grid-template-columns:12px 1fr 56px 12px 56px 40px 56px;font-size:11.5px}
-  .top-stats{width:100%}.stat{flex:1}
-  .actions .btn{flex:1;text-align:center}
+
+/* планшеты */
+@media(max-width:1040px){
+  .grid{grid-template-columns:minmax(0,1fr)}
+}
+/* мобильные */
+@media(max-width:700px){
+  .wrap{padding:0 12px}
+  .top{padding-top:20px;padding-bottom:16px;gap:14px}
+  .eyebrow{font-size:8.5px;letter-spacing:.2em;margin-bottom:8px}
+  .top-stats{width:100%;gap:8px}
+  .stat{flex:1;min-width:0;padding:10px 12px;text-align:center}
+  .stat-n{font-size:18px}
+  .stat-l{font-size:9px;letter-spacing:.04em}
+  .grid{gap:14px;padding-bottom:40px}
+  .col-left{gap:14px}
+  .panel{padding:16px 13px;border-radius:14px}
+  input,select{font-size:16px;padding:10px}
+  .pval{font-size:15px}
+  .pstep{font-size:13px;padding:9px 4px}
+  .plan-row{grid-template-columns:32px minmax(0,1fr) 92px 64px;gap:8px;padding:8px 4px}
+  .picon{width:32px;height:32px;border-radius:8px}
+  .picon svg{width:16px;height:16px}
+  .plabel{font-size:13px}
+  .plabel small{font-size:10px}
+  .add-form{grid-template-columns:minmax(0,1fr) 72px}
+  .add-form .btn{grid-column:1/-1}
+  .emp-row{gap:8px;padding:10px}
+  .emp-name{font-size:14px}
+  .stepper button{width:26px;height:30px}
+  .hval{min-width:44px;font-size:12px;padding:0 2px}
+  .cards{grid-template-columns:minmax(0,1fr);gap:12px}
+  .emp-card{padding:14px 12px 10px}
+  .emp-card:hover{transform:none}
+  .mrow{gap:6px;padding:7px 0}
+  .mval{font-size:14px}
+  .fact{width:58px;padding:8px 6px;font-size:13px}
+  .chip{font-size:10px;padding:2px 7px}
+  .vs{padding:12px 10px;margin-top:16px}
+  .vs-head,.vs-row{grid-template-columns:10px minmax(0,1fr) 58px 14px 58px 40px 58px;gap:5px}
+  .vs-row{font-size:11.5px;padding:6px 0}
+  .vs-head{font-size:8.5px;gap:5px}
+  .vplan,.vsum,.vfact{font-size:11px}
+  .vdelta{font-size:10px}
+  .actions{gap:8px}
+  .actions .btn{flex:1 1 45%;padding:13px 8px;font-size:13.5px;text-align:center}
+  .fhint,.note{font-size:11.5px}
+  .share-legend{font-size:11px;gap:6px 12px}
+  .date{font-size:13px}
+  .foot{font-size:11.5px}
+  .tk-set{gap:24px;padding:8px 12px;margin-right:24px}
+  .tk-set span{font-size:9px}
+}
+/* узкие экраны */
+@media(max-width:400px){
+  .vs-head,.vs-row{grid-template-columns:8px minmax(0,1fr) 48px 10px 48px 34px 48px;gap:4px}
+  .vs-row{font-size:10.5px}
+  .vs-head{font-size:8px}
+  .vplan,.vsum,.vfact{font-size:10px}
+  .vdelta{font-size:9px}
+  .plan-row{grid-template-columns:28px minmax(0,1fr) 78px 56px;gap:6px}
+  .picon{width:28px;height:28px}
+  .fact{width:52px;font-size:12px}
+  .mval{font-size:13px}
+  .stat-n{font-size:16px}
+  .emp-card h3{font-size:15px}
+  h1{font-size:24px}
 }
 </style>
 </head>
@@ -195,7 +257,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <div id="empList"></div>
       <form id="addForm" class="add-form" autocomplete="off">
         <input id="addName" type="text" placeholder="Имя сотрудника" maxlength="20">
-        <input id="addHours" type="number" min="0" max="24" step="0.5" value="8" title="Часов в смене">
+        <input id="addHours" type="number" min="0" max="24" step="0.5" value="8" title="Часов в смене" inputmode="decimal">
         <button class="btn ghost" type="submit">+ Добавить</button>
       </form>
     </div>
@@ -223,7 +285,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
         <div id="vsRows"></div>
       </div>
       <div class="actions">
-        <button class="btn primary" id="chatBtn" type="button">📱 План в чат (с фактами)</button>
+        <button class="btn primary" id="chatBtn" type="button">📱 План в чат</button>
         <button class="btn ghost" id="copyBtn" type="button">⧉ Сводка</button>
         <button class="btn ghost" id="clearFactsBtn" type="button">Стереть факты</button>
         <button class="btn ghost" id="resetBtn" type="button">Сбросить день</button>
@@ -269,7 +331,6 @@ function seed(){
     facts:{}
   };
 }
-/* нормализация: даже из старого/битого хранилища получаем рабочий state */
 function normalize(s){
   if(!s||!Array.isArray(s.emps))return null;
   s.plan=s.plan||{};s.steps=s.steps||{};s.facts=s.facts||{};
@@ -288,8 +349,6 @@ function load(){
   try{return normalize(JSON.parse(localStorage.getItem(KEY)));}catch(e){return null;}
 }
 function save(){
-  /* хранилище может быть заблокировано (превью, приватный режим) —
-     тогда просто работаем без сохранения, расчёт не должен ломаться */
   try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
 }
 let state=load()||seed();
@@ -355,15 +414,20 @@ function refreshPlanInputs(){
 planList.addEventListener('input',e=>{
   const el=e.target.closest('.pval');if(!el)return;
   state.plan[el.dataset.m]=parseInt(el.value.replace(/\D/g,''),10)||0;
-  update();   /* сначала пересчёт — он главный */
-  save();
+  update();save();
 });
 planList.addEventListener('blur',e=>{
   const el=e.target.closest('.pval');
   if(el)el.value=fmt(state.plan[el.dataset.m]);
 },true);
 planList.addEventListener('change',e=>{
-  if(e.target.classList.contains('pstep')){state.steps[e.target.dataset.m]=+e.target.value;update();save();}
+  const el=e.target;
+  if(el.classList.contains('pstep')){state.steps[el.dataset.m]=+el.value;update();save();return;}
+  if(el.classList.contains('pval')){
+    state.plan[el.dataset.m]=parseInt(el.value.replace(/\D/g,''),10)||0;
+    el.value=fmt(state.plan[el.dataset.m]);
+    update();save();
+  }
 });
 
 /* сотрудники */
@@ -594,7 +658,7 @@ chatBtn.onclick=()=>{
   METRICS.forEach(m=>L.push(`   ${m.label}: план ${fmt(state.plan[m.id])} → ${fmt(r.sum[m.id])} ${m.unit}`));
   L.push('');
   L.push('✏️ Сотрудник: впиши свой факт вместо прочерков и верни это сообщение в чат до конца смены.');
-  copyText(L.join('\n'),chatBtn,'📱 Скопировано!','📱 План в чат (с фактами)');
+  copyText(L.join('\n'),chatBtn,'📱 Скопировано!','📱 План в чат');
 };
 
 /* ⧉ сводка для руководителя */
@@ -629,14 +693,6 @@ document.getElementById('resetBtn').onclick=()=>{
   state=seed();builtIds=['—'];
   refreshPlanInputs();renderEmps();structure();update();save();
 };
-
-/* защита от зависшего ввода: любое изменение плана дополнительно пересчитываем по событию change */
-planList.addEventListener('change',e=>{
-  const el=e.target.closest('.pval');if(!el)return;
-  state.plan[el.dataset.m]=parseInt(el.value.replace(/\D/g,''),10)||0;
-  el.value=fmt(state.plan[el.dataset.m]);
-  update();save();
-});
 
 refreshPlanInputs();renderEmps();structure();update();
 </script>
