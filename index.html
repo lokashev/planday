@@ -1,1999 +1,1249 @@
 <!DOCTYPE html>
 <html lang="ru" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>План, Прогноз и Рейтинг продаж</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            background-color: #0b0f17;
-            color: #f1f5f9;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Sales Tracker — План / Факт</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            bgMain: '#0b0e14',
+            bgCard: '#151923',
+            bgCardHover: '#1c2230',
+            borderDark: '#232a3b',
+            accent: '#3b82f6'
+          }
         }
-        /* Защита от авто-зума в iOS Safari */
-        input, select, textarea {
-            font-size: 16px !important;
-        }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
-        }
-        input[type=number] {
-            -moz-appearance: textfield;
-        }
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .btn-active:active {
-            transform: scale(0.97);
-        }
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(0.8);
-            cursor: pointer;
-        }
-    </style>
+      }
+    }
+  </script>
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      background-color: #0b0e14;
+      color: #f3f4f6;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding-bottom: 84px;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
 </head>
-<body class="text-slate-100 pb-24 min-h-screen selection:bg-indigo-500 selection:text-white">
+<body class="min-h-screen select-none">
 
-    <!-- Главный мобильный контейнер -->
-    <div class="max-w-md mx-auto min-h-screen flex flex-col">
-
-        <!-- ВЕРХНЯЯ ШАПКА -->
-        <header class="bg-[#111726]/95 border-b border-slate-800/80 px-4 py-3 sticky top-0 z-30 backdrop-blur-md">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-500/20 text-lg shrink-0">
-                        📈
-                    </div>
-                    <div class="min-w-0">
-                        <div class="flex items-center gap-2">
-                            <h1 id="headerPeriodTitle" class="text-sm font-extrabold tracking-tight text-white truncate">
-                                Недельный конкурс
-                            </h1>
-                            <span id="headerDaysPill" onclick="switchTab('settings')" class="cursor-pointer text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 shrink-0">
-                                День 3 из 7
-                            </span>
-                        </div>
-                        <p id="headerPeriodDates" class="text-[11px] text-slate-400 truncate">01.10 — 07.10 • Точка продаж</p>
-                    </div>
-                </div>
-
-                    <!-- Статус облака Google Таблицы -->
-                <button onclick="handleCloudQuickClick()" id="cloudStatusBtn" class="btn-active text-[11px] font-bold px-2.5 py-1.5 rounded-xl bg-slate-800/90 text-slate-300 border border-slate-700/80 flex items-center gap-1.5 shrink-0">
-                    <span id="cloudDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    <span id="cloudStatusLabel">Облако подключено</span>
-                </button>
-            </div>
-        </header>
-
-        <!-- ==================== ВКЛАДКА 1: 📊 СВОДКА (СТАТИСТИКА И ПРОГНОЗ) ==================== -->
-        <main id="tab_dashboard" class="px-3.5 pt-4 space-y-4 flex-1">
-
-            <!-- Главный виджет периода: Выполнение + Прогноз + Управление текущим днем -->
-            <section class="bg-gradient-to-br from-[#151c2c] to-[#111622] rounded-2xl p-4 shadow-lg border border-slate-800/90">
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-400">Статистика периода</span>
-                        <h2 id="dashPeriodName" class="text-base font-extrabold text-white">Текущая неделя</h2>
-                    </div>
-                    <!-- Быстрый переключатель "Прошло дней" для прогноза -->
-                    <div class="flex items-center gap-1 bg-[#0b0f17] px-2 py-1 rounded-xl border border-slate-800">
-                        <span class="text-[10px] text-slate-400 mr-1">Прошло дн:</span>
-                        <button onclick="stepElapsedDays(-1)" class="w-6 h-6 rounded-lg bg-[#151c28] text-slate-300 font-bold text-xs">−</button>
-                        <span id="dashElapsedDaysText" class="text-xs font-extrabold text-amber-400 px-1.5">3 / 7</span>
-                        <button onclick="stepElapsedDays(1)" class="w-6 h-6 rounded-lg bg-[#151c28] text-slate-300 font-bold text-xs">+</button>
-                    </div>
-                </div>
-
-                <!-- Две главные плашки: Текущий факт % и Прогноз на конец % -->
-                <div class="grid grid-cols-2 gap-2.5 mb-3">
-                    <div class="bg-[#0b0f17]/90 p-3 rounded-xl border border-slate-800/90">
-                        <div class="text-[11px] text-slate-400 font-medium mb-0.5">Выполнение сейчас</div>
-                        <div class="flex items-baseline gap-2">
-                            <span id="dashOverallFactPct" class="text-2xl font-black text-emerald-400">0%</span>
-                            <span id="dashTimeProgressPct" class="text-[11px] text-slate-500">время: 43%</span>
-                        </div>
-                        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2">
-                            <div id="dashOverallFactBar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
-                        </div>
-                    </div>
-
-                    <div class="bg-[#0b0f17]/90 p-3 rounded-xl border border-slate-800/90">
-                        <div class="text-[11px] text-slate-400 font-medium mb-0.5">Прогноз на конец</div>
-                        <div class="flex items-baseline gap-2">
-                            <span id="dashOverallForecastPct" class="text-2xl font-black text-indigo-400">0%</span>
-                            <span id="dashPaceStatusBadge" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300">В темпе</span>
-                        </div>
-                        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2">
-                            <div id="dashOverallForecastBar" class="bg-indigo-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Быстрые действия со сводкой -->
-                <div class="flex gap-2">
-                    <button onclick="copyDashboardSummaryToChat()" class="btn-active flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs py-2.5 px-3 rounded-xl shadow-md shadow-emerald-500/15 flex items-center justify-center gap-1.5 transition">
-                        <span>📋 Скопировать сводку и прогноз в чат</span>
-                    </button>
-                    <button onclick="switchTab('input')" class="btn-active bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 font-bold text-xs py-2.5 px-3 rounded-xl transition shrink-0">
-                        ✍️ Внести
-                    </button>
-                </div>
-            </section>
-
-            <!-- Детальные карточки по всем 7 показателям с прогнозом и нужным темпом в день -->
-            <section class="space-y-2.5">
-                <div class="flex items-center justify-between px-1">
-                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Показатели недели (Факт / План / Прогноз)</h3>
-                    <button onclick="switchTab('settings')" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold">Изменить планы ⚙️</button>
-                </div>
-                <div id="dashMetricsGrid" class="space-y-2.5">
-                    <!-- Генерируется через JS -->
-                </div>
-            </section>
-        </main>
-
-        <!-- ==================== ВКЛАДКА 2: ✍️ ВНЕСТИ (ДНЕВНОЙ ПЛАН ПО ЧАСАМ + ВВОД ФАКТА) ==================== -->
-        <main id="tab_input" class="px-3.5 pt-4 space-y-4 flex-1 hidden">
-
-            <!-- Верхний переключатель режима внутри вкладки "Внести" -->
-            <div class="grid grid-cols-2 gap-1.5 bg-[#111726] p-1 rounded-2xl border border-slate-800">
-                <button onclick="setInputSubMode('shift_plan')" id="subBtn_shift_plan" class="py-2.5 px-3 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5">
-                    <span>⏱ 1. План смены (Часы)</span>
-                </button>
-                <button onclick="setInputSubMode('fact_entry')" id="subBtn_fact_entry" class="py-2.5 px-3 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5">
-                    <span>✅ 2. Внести факт</span>
-                </button>
-            </div>
-
-            <!-- ПОД-РЕЖИМ 1: РАСПРЕДЕЛЕНИЕ ДНЕВНОГО ПЛАНА ПО ЧАСАМ И ОТПРАВКА В ЧАТ -->
-            <div id="inputSub_shift_plan" class="space-y-4">
-                
-                <!-- Дата смены -->
-                <div class="bg-[#151c28] rounded-2xl p-3.5 border border-slate-800/80 flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2">
-                        <span class="text-base">📅</span>
-                        <div>
-                            <div class="text-[10px] text-slate-400 font-medium">Дата смены</div>
-                            <input type="date" id="dailyShiftDate" onchange="updateDailyShiftDate(this.value)" class="bg-transparent text-white font-bold text-xs focus:outline-none">
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <button onclick="fillDailyPlanFromAverage()" class="btn-active text-[11px] font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 px-2.5 py-1.5 rounded-xl">
-                            План ÷ Дни
-                        </button>
-                        <button onclick="fillDailyPlanFromRemaining()" class="btn-active text-[11px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2.5 py-1.5 rounded-xl" title="Остаток плана разделить на оставшиеся дни">
-                            Из остатка
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Кто сегодня на смене и сколько часов -->
-                <section class="bg-[#151c28] rounded-2xl p-4 border border-slate-800/80">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="font-bold text-white text-sm flex items-center gap-2">
-                            <span class="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-300 flex items-center justify-center text-xs font-extrabold">1</span>
-                            <span>Кто в смене и часы работы</span>
-                        </h3>
-                        <span id="dailyTotalHoursBadge" class="text-xs font-extrabold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-lg">
-                            0 ч.
-                        </span>
-                    </div>
-
-                    <!-- Чипсы быстрого добавления сотрудников из постоянной команды -->
-                    <div class="mb-3">
-                        <div class="text-[11px] text-slate-400 mb-1.5">Нажмите на имя, чтобы добавить в сегодняшнюю смену:</div>
-                        <div id="teamQuickChips" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1"></div>
-                    </div>
-
-                    <!-- Ручное добавление сотрудника + выбор часов -->
-                    <div class="bg-[#0b0f17] p-3 rounded-xl border border-slate-800 mb-3">
-                        <div class="flex gap-2 mb-2">
-                            <input type="text" id="newShiftEmpName" placeholder="Имя сотрудника..." onkeydown="if(event.key==='Enter') addShiftEmployeeFromForm()" class="flex-1 bg-[#151c28] border border-slate-700/80 rounded-xl px-3 py-2 text-white placeholder-slate-500 text-xs font-semibold focus:outline-none focus:border-indigo-500">
-                            <input type="number" id="newShiftEmpHours" inputmode="decimal" step="0.5" value="12" class="w-20 bg-[#151c28] border border-slate-700/80 rounded-xl px-2 py-2 text-emerald-400 text-center font-extrabold text-xs focus:outline-none">
-                        </div>
-                        <div class="flex items-center justify-between gap-1.5">
-                            <div class="flex gap-1 overflow-x-auto no-scrollbar">
-                                <button type="button" onclick="document.getElementById('newShiftEmpHours').value=4" class="px-2 py-1 text-[11px] font-bold rounded-lg bg-[#151c28] text-slate-300 border border-slate-800">4ч</button>
-                                <button type="button" onclick="document.getElementById('newShiftEmpHours').value=6" class="px-2 py-1 text-[11px] font-bold rounded-lg bg-[#151c28] text-slate-300 border border-slate-800">6ч</button>
-                                <button type="button" onclick="document.getElementById('newShiftEmpHours').value=8" class="px-2 py-1 text-[11px] font-bold rounded-lg bg-[#151c28] text-slate-300 border border-slate-800">8ч</button>
-                                <button type="button" onclick="document.getElementById('newShiftEmpHours').value=10" class="px-2 py-1 text-[11px] font-bold rounded-lg bg-[#151c28] text-slate-300 border border-slate-800">10ч</button>
-                                <button type="button" onclick="document.getElementById('newShiftEmpHours').value=12" class="px-2 py-1 text-[11px] font-bold rounded-lg bg-[#151c28] text-slate-300 border border-slate-800">12ч</button>
-                            </div>
-                            <button type="button" onclick="addShiftEmployeeFromForm()" class="btn-active bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3 py-1.5 rounded-xl shrink-0">
-                                + В смену
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Карточки сотрудников сегодняшней смены с разделенным планом -->
-                    <div id="dailyShiftEmployeesList" class="space-y-2.5"></div>
-                </section>
-
-                <!-- Дневной план точки (7 показателей) -->
-                <section class="bg-[#151c28] rounded-2xl p-4 border border-slate-800/80">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="font-bold text-white text-sm flex items-center gap-2">
-                            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-xs font-extrabold">2</span>
-                            <span>План точки на сегодня</span>
-                        </h3>
-                        <button onclick=" toggleDailyRounding()" id="dailyRoundingBtn" class="text-[11px] bg-[#0b0f17] text-emerald-400 border border-slate-800 px-2.5 py-1 rounded-lg font-bold">
-                            Округление: Целые
-                        </button>
-                    </div>
-                    <div id="dailyMetricsInputsList" class="space-y-2"></div>
-                </section>
-
-                <!-- Готовый текст для отправки в чат -->
-                <section class="bg-[#151c28] rounded-2xl p-4 border border-slate-800/80">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-bold text-white text-sm">💬 Шаблон «План / Факт» в чат</h3>
-                        <div class="flex gap-1 bg-[#0b0f17] p-0.5 rounded-lg border border-slate-800 text-[11px]">
-                            <button onclick="setChatFormat('by_emp')" id="fmtBtn_emp" class="px-2 py-1 rounded-md font-bold">По людям</button>
-                            <button onclick="setChatFormat('by_metric')" id="fmtBtn_metric" class="px-2 py-1 rounded-md font-bold">По плану</button>
-                        </div>
-                    </div>
-                    <textarea id="dailyChatTextarea" rows="10" class="w-full bg-[#080b11] text-slate-100 border border-slate-800 font-mono text-xs leading-relaxed p-3 rounded-xl focus:outline-none focus:border-emerald-500 mb-3"></textarea>
-                    <div class="flex gap-2">
-                        <button onclick="copyTextarea('dailyChatTextarea', '✅ План на день скопирован в чат!')" class="btn-active flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-extrabold text-xs py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
-                            <span>📋 Скопировать план в чат</span>
-                        </button>
-                        <button onclick="shareTextarea('dailyChatTextarea')" class="btn-active bg-slate-800 text-slate-200 border border-slate-700 font-bold text-xs py-3.5 px-4 rounded-xl">
-                            📤
-                        </button>
-                    </div>
-                </section>
-            </div>
-
-            <!-- ПОД-РЕЖИМ 2: ВНЕСТИ ФАКТ ЗА ДЕНЬ В ЗАЧЕТ ПЕРИОДА -->
-            <div id="inputSub_fact_entry" class="space-y-4 hidden">
-                <section class="bg-[#151c28] rounded-2xl p-4 border border-slate-800/80 space-y-3.5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="font-bold text-white text-sm">Записать факт сотрудника за смену</h3>
-                            <p class="text-[11px] text-slate-400">Цифры сразу прибавятся в Сводку, Рейтинг и Историю</p>
-                        </div>
-                        <span class="text-xl">✍️</span>
-                    </div>
-
-                    <!-- Выбор даты и сотрудника -->
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="bg-[#0b0f17] p-2.5 rounded-xl border border-slate-800">
-                            <label class="block text-[10px] text-slate-400 mb-1">Дата смены</label>
-                            <input type="date" id="factEntryDate" class="bg-transparent text-white font-bold text-xs w-full focus:outline-none">
-                        </div>
-                        <div class="bg-[#0b0f17] p-2.5 rounded-xl border border-slate-800">
-                            <label class="block text-[10px] text-slate-400 mb-1">Отработано часов</label>
-                            <input type="number" id="factEntryHours" inputmode="decimal" step="0.5" value="12" class="bg-transparent text-emerald-400 font-extrabold text-xs w-full focus:outline-none">
-                        </div>
-                    </div>
-
-                    <!-- Выбор сотрудника из списка или новое имя -->
-                    <div>
-                        <label class="block text-[11px] text-slate-400 font-medium mb-1.5">Выберите сотрудника:</label>
-                        <div id="factEmployeeSelectorChips" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 mb-2"></div>
-                        <input type="text" id="factEntryEmpName" placeholder="Или введите имя сотрудника..." class="w-full bg-[#0b0f17] border border-slate-800 rounded-xl px-3 py-2.5 text-white font-bold text-xs focus:outline-none focus:border-emerald-500">
-                    </div>
-
-                    <!-- Быстрая вставка сообщения из чата (Авто-парсер факта) -->
-                    <details class="bg-[#0b0f17] rounded-xl border border-slate-800/90 p-2.5">
-                        <summary class="text-xs font-bold text-indigo-400 cursor-pointer select-none">
-                            ⚡ Вставить заполненное сообщение из чата (авто-разбор)
-                        </summary>
-                        <div class="mt-2 space-y-2">
-                            <textarea id="chatParseInput" rows="4" placeholder="Вставьте сюда ответ сотрудника из чата (например: Сим: 5 / 6)..." class="w-full bg-[#151c28] border border-slate-700 rounded-lg p-2 text-xs text-slate-200 focus:outline-none"></textarea>
-                            <button type="button" onclick="parseFactFromChatText()" class="w-full py-2 bg-indigo-600/30 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 rounded-lg text-xs font-bold">
-                                Распознать цифры из текста
-                            </button>
-                        </div>
-                    </details>
-
-                    <!-- Ввод факта по 7 показателям -->
-                    <div id="factEntryMetricsGrid" class="space-y-2"></div>
-
-                    <button onclick="submitDailyFactEntry()" class="btn-active w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-extrabold text-sm py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
-                        <span>💾 Сохранить факт в зачёт недели</span>
-                    </button>
-                </section>
-            </div>
-        </main>
-
-        <!-- ==================== ВКЛАДКА 3: 🏆 РЕЙТИНГ (ТАБЛИЦА СОТРУДНИКОВ) ==================== -->
-        <main id="tab_leaderboard" class="px-3.5 pt-4 space-y-4 flex-1 hidden">
-
-            <!-- Пьедестал ТОП-3 -->
-            <section id="podiumSection" class="grid grid-cols-3 gap-2">
-                <!-- Генерируется через JS -->
-            </section>
-
-            <!-- Переключатель вида рейтинга: Сводная таблица / Карточки -->
-            <section class="bg-[#151c28] rounded-2xl p-4 border border-slate-800/80">
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <h2 class="font-bold text-white text-sm">Турнирная таблица сотрудников</h2>
-                        <p class="text-[11px] text-slate-400">Личный план каждого пропорционален его часам</p>
-                    </div>
-                    <div class="flex bg-[#0b0f17] p-0.5 rounded-xl border border-slate-800 text-[11px] font-bold">
-                        <button onclick="setLeaderboardView('table')" id="lbView_table" class="px-2.5 py-1.5 rounded-lg transition">Таблица</button>
-                        <button onclick="setLeaderboardView('cards')" id="lbView_cards" class="px-2.5 py-1.5 rounded-lg transition">Карточки</button>
-                    </div>
-                </div>
-
-                <!-- Контейнер таблицы или карточек -->
-                <div id="leaderboardContainer"></div>
-
-                <!-- Кнопки экспорта и ручной правки -->
-                <div class="mt-4 pt-3 border-t border-slate-800 flex gap-2">
-                    <button onclick="copyLeaderboardToChat()" class="btn-active flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs py-3 px-3 rounded-xl flex items-center justify-center gap-1.5">
-                        <span>📋 Скопировать рейтинг в чат</span>
-                    </button>
-                    <button onclick="switchTab('settings'); scrollToElement('manualFactEditorSection')" class="btn-active bg-slate-800 text-slate-300 border border-slate-700 font-bold text-xs py-3 px-3 rounded-xl">
-                        ✏️ Править
-                    </button>
-                </div>
-            </section>
-        </main>
-
-        <!-- ==================== ВКЛАДКА 4: 📜 ИСТОРИЯ (ЛОГ СМЕН И АРХИВ НЕДЕЛЬ) ==================== -->
-        <main id="tab_history" class="px-3.5 pt-4 space-y-4 flex-1 hidden">
-
-            <!-- Лог внесенных смен текущего периода -->
-            <section class="bg-[#151c28] rounded-2xl p-4 border border-slate-800/80">
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <h2 class="font-bold text-white text-sm">Журнал внесённых смен</h2>
-                        <p class="text-[11px] text-slate-400">Все записи факта за текущий период</p>
-                    </div>
-                    <button onclick="switchTab('input'); setInputSubMode('fact_entry')" class="text-xs font-bold bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-1.5 rounded-xl">
-                        + Добавить запись
-                    </button>
-                </div>
-
-                <div id="historyLogsList" class="space-y-2">
-                    <!-- Генерируется через JS -->
-                </div>
-            </section>
-
-            <!-- Архив прошлых периодов / недель -->
-            <section class="bg-[#151c28] rounded-2xl p-4 border border-slate-800/80">
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <h2 class="font-bold text-white text-sm">Архив недель и конкурсов</h2>
-                        <p class="text-[11px] text-slate-400">Сохранённые итоги прошлых периодов</p>
-                    </div>
-                    <button onclick="archiveCurrentPeriod()" class="btn-active text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2.5 py-1.5 rounded-xl">
-                        📥 Сохранить текущий в архив
-                    </button>
-                </div>
-
-                <div id="archivedPeriodsList" class="space-y-2.5">
-                    <!-- Генерируется через JS -->
-                </div>
-            </section>
-        </main>
-
-        <!-- ==================== ВКЛАДКА 5: ⚙️ НАСТРОЙКИ (ПЕРИОД, ПЛАНЫ, ФАКТ И GOOGLE БД) ==================== -->
-        <main id="tab_settings" class="px-3.5 pt-4 space-y-4 flex-1 hidden">
-
-            <!-- 1. СОЗДАНИЕ И НАСТРОЙКА ПЕРИОДА (НЕДЕЛИ / КОНКУРСА) -->
-            <section class="bg-[#151c28] rounded-2xl p-4 border border-slate-800/80 space-y-3">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="font-bold text-white text-sm">🗓 1. Настройка периода и Планов</h2>
-                        <p class="text-[11px] text-slate-400">Любая длительность (3, 7, 10 дней) и даты</p>
-                    </div>
-                    <button onclick="openNewPeriodModal()" class="btn-active text-xs font-extrabold bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl shadow-md shadow-indigo-600/20">
-                        + Новая неделя
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="col-span-2 bg-[#0b0f17] p-2.5 rounded-xl border border-slate-800">
-                        <label class="block text-[10px] text-slate-400 mb-0.5">Название недели / конкурса</label>
-                        <input type="text" id="setPeriodTitle" oninput="updatePeriodMeta('title', this.value)" class="w-full bg-transparent text-white font-bold text-xs focus:outline-none">
-                    </div>
-                    <div class="bg-[#0b0f17] p-2.5 rounded-xl border border-slate-800">
-                        <label class="block text-[10px] text-slate-400 mb-0.5">Дата начала (с)</label>
-                        <input type="date" id="setStartDate" onchange="updatePeriodMeta('startDate', this.value)" class="w-full bg-transparent text-white font-bold text-xs focus:outline-none">
-                    </div>
-                    <div class="bg-[#0b0f17] p-2.5 rounded-xl border border-slate-800">
-                        <label class="block text-[10px] text-slate-400 mb-0.5">Дата конца (по)</label>
-                        <input type="date" id="setEndDate" onchange="updatePeriodMeta('endDate', this.value)" class="w-full bg-transparent text-white font-bold text-xs focus:outline-none">
-                    </div>
-                </div>
-
-                <!-- Длительность в днях и сколько дней прошло -->
-                <div class="bg-[#0b0f17] p-3 rounded-xl border border-slate-800 space-y-2.5">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs text-slate-300 font-semibold">Всего дней в периоде:</span>
-                        <input type="number" id="setTotalDays" min="1" max="90" oninput="updatePeriodMeta('totalDays', this.value)" class="w-16 bg-[#151c28] border border-indigo-500/40 rounded-lg py-1 text-center font-extrabold text-indigo-300 text-xs">
-                    </div>
-                    <div class="grid grid-cols-5 gap-1.5">
-                        <button onclick="setQuickPeriodDays(3)" class="py-1.5 rounded-lg text-xs font-bold bg-[#151c28] border border-slate-800 text-slate-300">3 дн.</button>
-                        <button onclick="setQuickPeriodDays(5)" class="py-1.5 rounded-lg text-xs font-bold bg-[#151c28] border border-slate-800 text-slate-300">5 дн.</button>
-                        <button onclick="setQuickPeriodDays(7)" class="py-1.5 rounded-lg text-xs font-bold bg-[#151c28] border border-slate-800 text-slate-300">7 дн.</button>
-                        <button onclick="setQuickPeriodDays(10)" class="py-1.5 rounded-lg text-xs font-bold bg-[#151c28] border border-slate-800 text-slate-300">10 дн.</button>
-                        <button onclick="setQuickPeriodDays(14)" class="py-1.5 rounded-lg text-xs font-bold bg-[#151c28] border border-slate-800 text-slate-300">14 дн.</button>
-                    </div>
-                    <div class="flex items-center justify-between pt-2 border-t border-slate-800/80">
-                        <span class="text-xs text-slate-300 font-semibold">Сколько дней уже отработано (для прогноза):</span>
-                        <input type="number" id="setElapsedDays" min="1" max="90" oninput="updatePeriodMeta('elapsedDays', this.value)" class="w-16 bg-[#151c28] border border-amber-500/40 rounded-lg py-1 text-center font-extrabold text-amber-300 text-xs">
-                    </div>
-                </div>
-
-                <!-- Планы на период по 7 показателям -->
-                <div>
-                    <div class="text-xs font-bold text-slate-300 mb-2">🎯 Планы точки на весь период:</div>
-                    <div id="settingsPeriodPlansList" class="space-y-2"></div>
-                </div>
-            </section>
-
-            <!-- 2. РУЧНОЕ РЕДАКТИРОВАНИЕ ФАКТА И ЧАСОВ СОТРУДНИКОВ -->
-            <section id="manualFactEditorSection" class="bg-[#151c28] rounded-2xl p-4 border border-slate-800/80 space-y-3">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="font-bold text-white text-sm">✏️ 2. Редактор факта и часов команды</h2>
-                        <p class="text-[11px] text-slate-400">Прямая корректировка накопленных цифр любого сотрудника</p>
-                    </div>
-                    <button onclick="promptAddTeamMember()" class="text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2.5 py-1.5 rounded-xl">
-                        + Сотрудник
-                    </button>
-                </div>
-
-                <div id="settingsStaffFactEditorList" class="space-y-2.5">
-                    <!-- Генерируется через JS -->
-                </div>
-            </section>
-
-            <!-- 3. БАЗА ДАННЫХ GOOGLE ТАБЛИЦЫ (ДЛЯ VERCEL) -->
-            <section class="bg-[#151c28] rounded-2xl p-4 border border-slate-800/80 space-y-3">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-base">
-                        ☁️
-                    </div>
-                    <div>
-                        <h2 class="font-bold text-white text-sm">3. Google Таблица как База Данных</h2>
-                        <p class="text-[11px] text-slate-400">Хранение всех цифр в Google Sheets для сайта на Vercel</p>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-[11px] text-slate-300 font-medium mb-1">URL веб-приложения Google Apps Script:</label>
-                    <input type="url" id="settingsGoogleUrl" oninput="updateGoogleScriptUrl(this.value)" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-[#0b0f17] border border-slate-700 rounded-xl px-3 py-2 text-xs text-emerald-300 font-mono focus:outline-none focus:border-emerald-500">
-                </div>
-
-                <label class="flex items-center justify-between bg-[#0b0f17] px-3 py-2.5 rounded-xl border border-slate-800 cursor-pointer">
-                    <span class="text-xs text-slate-300 font-medium">Авто-сохранение в Google Таблицу при вводе факта</span>
-                    <input type="checkbox" id="autoSyncToggle" onchange="toggleAutoSync(this.checked)" class="w-4 h-4 rounded accent-emerald-500">
-                </label>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="pushToGoogleCloud()" class="btn-active bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs py-3 px-3 rounded-xl flex items-center justify-center gap-1.5">
-                        <span>⬆️ Выгрузить в Таблицу</span>
-                    </button>
-                    <button onclick="pullFromGoogleCloud()" class="btn-active bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs py-3 px-3 rounded-xl flex items-center justify-center gap-1.5">
-                        <span>⬇️ Загрузить из Таблицы</span>
-                    </button>
-                </div>
-
-                <div id="cloudSyncLogBox" class="text-[11px] text-slate-400 bg-[#0b0f17] px-3 py-2 rounded-xl border border-slate-800">
-                    Статус: Данные хранятся локально в браузере.
-                </div>
-
-                <!-- Инструкция и код для Google Таблиц -->
-                <details class="bg-[#0b0f17] rounded-xl border border-slate-800 p-3">
-                    <summary class="text-xs font-bold text-indigo-400 cursor-pointer select-none">
-                        📖 Показать код скрипта и инструкцию подключения Google Таблиц
-                    </summary>
-                    <div class="mt-3 space-y-2.5 text-xs text-slate-300">
-                        <p>1. Откройте новую <a href="https://sheets.new" target="_blank" class="underline text-emerald-400">Google Таблицу</a> → <b>Расширения → Apps Script</b>.</p>
-                        <p>2. Вставьте код ниже и нажмите <b>Начать развертывание → Веб-приложение</b> (Доступ: <b>Все / Anyone</b>). Вставьте ссылку выше.</p>
-                        <div class="flex justify-end">
-                            <button onclick="copyGoogleScriptCode()" class="bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-lg text-[11px] font-bold">
-                                📋 Скопировать код Apps Script
-                            </button>
-                        </div>
-                        <pre id="gsCodeBlock" class="bg-[#07090e] p-2.5 rounded-lg text-[10px] font-mono text-emerald-300 overflow-x-auto max-h-48">function doGet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName('DB_JSON');
-  if (!sheet) return ContentService.createTextOutput('{}').setMimeType(ContentService.MimeType.JSON);
-  return ContentService.createTextOutput(sheet.getRange('A2').getValue() || '{}').setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var raw = e.postData.contents;
-  var data = JSON.parse(raw);
-
-  // 1. Технический лист хранения состояния для сайта
-  var db = ss.getSheetByName('DB_JSON') || ss.insertSheet('DB_JSON');
-  db.clear();
-  db.getRange('A1').setValue('JSON State');
-  db.getRange('A2').setValue(raw);
-  db.getRange('B1').setValue('Updated');
-  db.getRange('B2').setValue(new Date());
-
-  // 2. Наглядная таблица рейтинга сотрудников
-  var lb = ss.getSheetByName('Рейтинг') || ss.insertSheet('Рейтинг');
-  lb.clear();
-  var headers = ['Сотрудник', 'Часы', 'Сим', 'Абоны', 'Товарная выручка', 'Аксессуары', 'Фин услуги', 'Мега семья', 'Адаптер'];
-  lb.appendRow(headers);
-  if (data.period && data.period.staff) {
-    data.period.staff.forEach(function(s) {
-      var f = s.facts || {};
-      lb.appendRow([s.name, s.hours || 0, f.sim||0, f.abony||0, f.tovarka||0, f.acc||0, f.fin||0, f.mega||0, f.adapter||0]);
-    });
-  }
-  return ContentService.createTextOutput(JSON.stringify({status:'ok'})).setMimeType(ContentService.MimeType.JSON);
-}</pre>
-                    </div>
-                </details>
-            </section>
-        </main>
-
-        <!-- НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (5 ВКЛАДОК) -->
-        <nav class="fixed bottom-0 left-0 right-0 bg-[#111726]/95 backdrop-blur-md border-t border-slate-800/90 z-40">
-            <div class="max-w-md mx-auto grid grid-cols-5 px-1 py-1.5">
-                <button onclick="switchTab('dashboard')" id="navBtn_dashboard" class="flex flex-col items-center justify-center py-1.5 rounded-xl transition">
-                    <span class="text-base leading-none mb-1">📊</span>
-                    <span class="text-[10px] font-bold">Сводка</span>
-                </button>
-                <button onclick="switchTab('input')" id="navBtn_input" class="flex flex-col items-center justify-center py-1.5 rounded-xl transition">
-                    <span class="text-base leading-none mb-1">✍️</span>
-                    <span class="text-[10px] font-bold">Внести</span>
-                </button>
-                <button onclick="switchTab('leaderboard')" id="navBtn_leaderboard" class="flex flex-col items-center justify-center py-1.5 rounded-xl transition">
-                    <span class="text-base leading-none mb-1">🏆</span>
-                    <span class="text-[10px] font-bold">Рейтинг</span>
-                </button>
-                <button onclick="switchTab('history')" id="navBtn_history" class="flex flex-col items-center justify-center py-1.5 rounded-xl transition">
-                    <span class="text-base leading-none mb-1">📜</span>
-                    <span class="text-[10px] font-bold">История</span>
-                </button>
-                <button onclick="switchTab('settings')" id="navBtn_settings" class="flex flex-col items-center justify-center py-1.5 rounded-xl transition">
-                    <span class="text-base leading-none mb-1">⚙️</span>
-                    <span class="text-[10px] font-bold">Настройки</span>
-                </button>
-            </div>
-        </nav>
-
-    </div>
-
-    <!-- МОДАЛЬНОЕ ОКНО: СОЗДАНИЕ НОВОЙ НЕДЕЛИ / ПЕРИОДА -->
-    <div id="newPeriodModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
-        <div class="bg-[#151c28] border border-slate-700 rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-3">
-            <h3 class="font-extrabold text-base text-white">Запустить новый период / неделю</h3>
-            <p class="text-xs text-slate-400">Текущий период автоматически сохранится в разделе «📜 История», а факты сотрудников обнулятся для нового старта.</p>
-            <div>
-                <label class="block text-[11px] text-slate-400 mb-1">Название нового периода</label>
-                <input type="text" id="modalNewPeriodTitle" placeholder="Например: Конкурс 8–14 октября" class="w-full bg-[#0b0f17] border border-slate-700 rounded-xl px-3 py-2 text-white text-xs font-bold">
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-                <div>
-                    <label class="block text-[11px] text-slate-400 mb-1">Дата начала</label>
-                    <input type="date" id="modalNewStartDate" class="w-full bg-[#0b0f17] border border-slate-700 rounded-xl px-2.5 py-2 text-white text-xs font-bold">
-                </div>
-                <div>
-                    <label class="block text-[11px] text-slate-400 mb-1">Длительность (дней)</label>
-                    <input type="number" id="modalNewTotalDays" value="7" min="1" max="60" class="w-full bg-[#0b0f17] border border-slate-700 rounded-xl px-2.5 py-2 text-emerald-400 text-center text-xs font-extrabold">
-                </div>
-            </div>
-            <div class="flex gap-2 pt-2">
-                <button onclick="closeNewPeriodModal()" class="flex-1 py-2.5 bg-slate-800 text-slate-300 rounded-xl font-bold text-xs">Отмена</button>
-                <button onclick="confirmCreateNewPeriod()" class="flex-1 py-2.5 bg-emerald-500 text-slate-950 rounded-xl font-extrabold text-xs">Создать период</button>
-            </div>
+  <!-- ЭКРАН АВТОРИЗАЦИИ ПО ТАБЕЛЬНОМУ НОМЕРУ -->
+  <div id="authModal" class="fixed inset-0 z-50 bg-[#0b0e14] flex flex-col justify-center items-center px-5">
+    <div class="w-full max-w-sm bg-[#151923] border border-[#232a3b] rounded-3xl p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-lg">📊</div>
+          <div>
+            <h1 class="text-base font-bold text-white leading-tight">SalesПлан</h1>
+            <p class="text-xs text-gray-400">Вход по табельному номеру</p>
+          </div>
         </div>
+        <span id="authSyncDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500" title="База подключена"></span>
+      </div>
+
+      <div class="mb-4">
+        <input id="tabInput" type="tel" placeholder="Ваш табельный номер" 
+          class="w-full bg-[#0b0e14] border border-[#232a3b] focus:border-blue-500 rounded-2xl px-4 py-3.5 text-center text-lg font-bold tracking-widest text-white outline-none transition"
+          onkeydown="if(event.key==='Enter') handleLogin()" />
+        <p id="authError" class="text-xs text-red-400 text-center mt-2 hidden">Табельный номер не найден</p>
+      </div>
+
+      <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-semibold py-3.5 rounded-2xl transition shadow-lg shadow-blue-600/25">
+        Войти
+      </button>
+
+      <!-- Скрытая подсказка для демо/быстрого входа -->
+      <details class="mt-4 text-xs text-gray-500">
+        <summary class="cursor-pointer text-center hover:text-gray-400">Быстрый вход (подсказка номеров)</summary>
+        <div id="quickLoginList" class="mt-2.5 flex flex-wrap gap-1.5 justify-center"></div>
+      </details>
     </div>
+  </div>
 
-    <!-- Всплывающее уведомление (Toast) -->
-    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-slate-950 px-4 py-2.5 rounded-full shadow-xl text-xs font-extrabold flex items-center gap-2 z-50 transition-all duration-300 opacity-0 pointer-events-none -translate-y-3">
-        <span id="toastText">Готово!</span>
+  <!-- МИНИМАЛИСТИЧНАЯ ШАПКА -->
+  <header class="sticky top-0 z-30 bg-[#0b0e14]/90 backdrop-blur-md border-b border-[#232a3b] px-4 py-2.5">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2 min-w-0">
+        <button onclick="syncWithCloud(true)" class="flex items-center gap-1.5 bg-[#151923] border border-[#232a3b] px-2.5 py-1 rounded-full text-xs">
+          <span id="cloudDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span id="headerPeriodTitle" class="font-semibold text-gray-200 truncate max-w-[130px]">Неделя</span>
+        </button>
+        <span id="syncTimeText" class="text-[11px] text-gray-500"></span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 bg-[#151923] border border-[#232a3b] px-2.5 py-1 rounded-full">
+          <span id="userRoleBadge" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400">АДМИН</span>
+          <span id="userNameLabel" class="text-xs font-medium text-gray-200 max-w-[90px] truncate">Админ</span>
+        </div>
+        <button onclick="logout()" class="p-1.5 rounded-full bg-[#151923] border border-[#232a3b] text-gray-400 hover:text-white" title="Сменить пользователя">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        </button>
+      </div>
     </div>
+  </header>
 
-    <script>
-        // --- 7 ФИКСИРОВАННЫХ ПОКАЗАТЕЛЕЙ ---
-        const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbyR7Gtr2-emzgBT_i2kQTQY17ZHTGeSsAzxGS1JXRQaONBAs8y-Cfwyf0Ytc_qkc2lq/exec';
+  <!-- ОСНОВНОЙ КОНТЕНТ -->
+  <main class="max-w-md mx-auto px-3.5 pt-3 space-y-3">
 
-        const METRICS = [
-            { id: 'sim', name: 'Сим', icon: '📱', unit: 'шт' },
-            { id: 'abony', name: 'Абоны', icon: '📅', unit: 'шт' },
-            { id: 'tovarka', name: 'Товарная выручка', icon: '💰', unit: '₽' },
-            { id: 'acc', name: 'Аксессуары', icon: '🎧', unit: '₽' },
-            { id: 'fin', name: 'Фин услуги', icon: '💳', unit: 'шт' },
-            { id: 'mega', name: 'Мега семья', icon: '👨‍👩‍👧', unit: 'шт' },
-            { id: 'adapter', name: 'Адаптер', icon: '🔌', unit: 'шт' }
-        ];
+    <!-- ================= ВКЛАДКА 1: СВОДКА (ЧИСТЫЙ МИНИМАЛИЗМ) ================= -->
+    <section id="tab-summary" class="space-y-3">
+      <!-- Компактная верхняя плашка из 3 цифр -->
+      <div class="bg-[#151923] border border-[#232a3b] rounded-2xl p-3.5">
+        <div class="grid grid-cols-3 gap-2 text-center divide-x divide-[#232a3b]">
+          <div>
+            <div class="text-[11px] text-gray-400">Выполнение</div>
+            <div id="sumAvgPct" class="text-xl font-extrabold text-white mt-0.5">0%</div>
+          </div>
+          <div>
+            <div class="text-[11px] text-gray-400">Прогноз</div>
+            <div id="sumForecastPct" class="text-xl font-extrabold text-emerald-400 mt-0.5">0%</div>
+          </div>
+          <div>
+            <div class="text-[11px] text-gray-400">Дни периода</div>
+            <div id="sumDaysBadge" class="text-base font-bold text-gray-200 mt-1">1 / 7</div>
+          </div>
+        </div>
+        <!-- Тонкий общий прогресс-бар -->
+        <div class="w-full h-1.5 bg-[#0b0e14] rounded-full overflow-hidden mt-3">
+          <div id="sumMainBar" class="h-full bg-blue-500 transition-all duration-300" style="width:0%"></div>
+        </div>
+      </div>
 
-        const STORAGE_KEY = 'retail_sales_suite_v4';
+      <!-- Единый компактный список всех 7 показателей -->
+      <div class="bg-[#151923] border border-[#232a3b] rounded-2xl overflow-hidden">
+        <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-[#232a3b]">
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Показатели (Факт / План)</span>
+          <button onclick="toggleAllDetails()" id="btnToggleDetails" class="text-xs text-blue-400 font-medium">
+            Детали
+          </button>
+        </div>
 
-        function getTodayIso() {
-            const d = new Date();
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        }
+        <div id="summaryMetricsList" class="divide-y divide-[#232a3b]"></div>
+      </div>
+    </section>
 
-        function addDaysIso(isoDate, days) {
-            const parts = (isoDate || getTodayIso()).split('-');
-            const d = new Date(parts[0], parts[1] - 1, parts[2]);
-            d.setDate(d.getDate() + (parseInt(days) || 1) - 1);
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        }
+    <!-- ================= ВКЛАДКА 2: ВНЕСТИ (ПЛАН ЧАСОВ И ФАКТ) ================= -->
+    <section id="tab-input" class="space-y-3 hidden">
+      <!-- Переключатель для Админа (Сотрудник видит только ввод своего факта) -->
+      <div id="adminInputSwitch" class="grid grid-cols-2 gap-1.5 bg-[#151923] p-1 rounded-2xl border border-[#232a3b]">
+        <button onclick="setInputMode('shift')" id="btnModeShift" class="py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white">
+          1. План смены (Часы)
+        </button>
+        <button onclick="setInputMode('fact')" id="btnModeFact" class="py-2 rounded-xl text-xs font-semibold text-gray-400">
+          2. Внести факт
+        </button>
+      </div>
 
-        function formatShortDate(iso) {
-            if (!iso) return '';
-            const p = iso.split('-');
-            return p.length === 3 ? `${p[2]}.${p[1]}` : iso;
-        }
+      <!-- РЕЖИМ 1: КАЛЬКУЛЯТОР СМЕНЫ ПО ЧАСАМ (ДЛЯ АДМИНА) -->
+      <div id="inputShiftBlock" class="space-y-3">
+        <!-- Сотрудники на смене -->
+        <div class="bg-[#151923] border border-[#232a3b] rounded-2xl p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-gray-300">Кто сегодня на смене и часы</span>
+            <span id="shiftTotalHoursBadge" class="text-xs font-bold text-blue-400">Всего: 0 ч.</span>
+          </div>
+          <div id="shiftStaffList" class="space-y-1.5"></div>
+        </div>
 
-        function formatNum(n) {
-            if (n === null || n === undefined || isNaN(n)) return '0';
-            return Number(n).toLocaleString('ru-RU', { maximumFractionDigits: 1 });
-        }
+        <!-- Дневной план на точку -->
+        <div class="bg-[#151923] border border-[#232a3b] rounded-2xl p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-gray-300">План магазина на день</span>
+            <div class="flex gap-1.5">
+              <button onclick="fillDayPlanFromPeriod('avg')" class="text-[11px] bg-[#0b0e14] border border-[#232a3b] px-2 py-1 rounded-lg text-gray-300">План ÷ Дни</button>
+              <button onclick="fillDayPlanFromPeriod('rem')" class="text-[11px] bg-blue-500/15 border border-blue-500/30 px-2 py-1 rounded-lg text-blue-300">Из остатка</button>
+            </div>
+          </div>
+          <div id="dayPlanInputs" class="grid grid-cols-2 gap-2"></div>
+        </div>
 
-        function emptyMetricsObj() {
-            return { sim: 0, abony: 0, tovarka: 0, acc: 0, fin: 0, mega: 0, adapter: 0 };
-        }
+        <!-- Предпросмотр и кнопка в чат -->
+        <div class="bg-[#151923] border border-[#232a3b] rounded-2xl p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-gray-300">Распределение по сотрудникам</span>
+            <label class="flex items-center gap-1.5 text-xs text-gray-400">
+              <input type="checkbox" id="hideZeroInChat" checked onchange="renderShiftPreview()" class="rounded bg-[#0b0e14] border-[#232a3b]" />
+              Скрыть 0
+            </label>
+          </div>
+          <pre id="shiftChatPreview" class="bg-[#0b0e14] border border-[#232a3b] rounded-xl p-3 text-xs text-gray-200 whitespace-pre-wrap font-mono max-h-52 overflow-y-auto"></pre>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="copyShiftToChat()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-xs">
+              📋 Скопировать в чат
+            </button>
+            <button onclick="shareShiftToChat()" class="bg-[#0b0e14] border border-[#232a3b] text-gray-200 font-semibold py-2.5 rounded-xl text-xs">
+              📤 Поделиться
+            </button>
+          </div>
+        </div>
+      </div>
 
-        // --- НАЧАЛЬНОЕ СОСТОЯНИЕ С ДЕМО-ДАННЫМИ ---
-        const defaultState = {
-            activeTab: 'dashboard',
-            inputSubMode: 'shift_plan',
-            leaderboardView: 'table',
-            googleScriptUrl: DEFAULT_GAS_URL,
-            autoSync: true,
-            lastSyncTime: '',
-            period: {
-                id: 'p_current',
-                title: 'Недельный план 1–7',
-                startDate: getTodayIso(),
-                endDate: addDaysIso(getTodayIso(), 7),
-                totalDays: 7,
-                elapsedDays: 3,
-                plans: {
-                    sim: 105,
-                    abony: 56,
-                    tovarka: 630000,
-                    acc: 105000,
-                    fin: 28,
-                    mega: 35,
-                    adapter: 42
-                },
-                staff: [
-                    {
-                        id: 's1',
-                        name: 'Алексей',
-                        hours: 24,
-                        facts: { sim: 26, abony: 14, tovarka: 165000, acc: 29000, fin: 8, mega: 10, adapter: 12 }
-                    },
-                    {
-                        id: 's2',
-                        name: 'Мария',
-                        hours: 20,
-                        facts: { sim: 22, abony: 12, tovarka: 135000, acc: 24000, fin: 6, mega: 8, adapter: 9 }
-                    },
-                    {
-                        id: 's3',
-                        name: 'Дмитрий',
-                        hours: 12,
-                        facts: { sim: 11, abony: 6, tovarka: 72000, acc: 12000, fin: 3, mega: 4, adapter: 5 }
-                    }
-                ],
-                logs: [
-                    {
-                        id: 'l1',
-                        date: getTodayIso(),
-                        empName: 'Алексей',
-                        hours: 12,
-                        facts: { sim: 14, abony: 7, tovarka: 85000, acc: 15000, fin: 4, mega: 5, adapter: 6 }
-                    },
-                    {
-                        id: 'l2',
-                        date: getTodayIso(),
-                        empName: 'Мария',
-                        hours: 8,
-                        facts: { sim: 10, abony: 5, tovarka: 60000, acc: 11000, fin: 3, mega: 4, adapter: 4 }
-                    }
-                ]
+      <!-- РЕЖИМ 2: ВНЕСТИ ФАКТ ЗА ДЕНЬ (АДМИН ИЛИ СОТРУДНИК) -->
+      <div id="inputFactBlock" class="space-y-3 hidden">
+        <div class="bg-[#151923] border border-[#232a3b] rounded-2xl p-3.5 space-y-3">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[11px] text-gray-400 block mb-1">Дата смены</label>
+              <input type="date" id="factDateInput" class="w-full bg-[#0b0e14] border border-[#232a3b] rounded-xl px-2.5 py-2 text-xs text-white" />
+            </div>
+            <div>
+              <label class="text-[11px] text-gray-400 block mb-1">Отработано часов</label>
+              <input type="number" id="factHoursInput" value="10" min="0" max="24" step="0.5" class="w-full bg-[#0b0e14] border border-[#232a3b] rounded-xl px-2.5 py-2 text-xs font-bold text-white" />
+            </div>
+          </div>
+
+          <div>
+            <label class="text-[11px] text-gray-400 block mb-1">Сотрудник</label>
+            <select id="factEmployeeSelect" onchange="updateEmployeePersonalHint()" class="w-full bg-[#0b0e14] border border-[#232a3b] rounded-xl px-3 py-2.5 text-xs font-semibold text-white"></select>
+          </div>
+
+          <!-- Подсказка личного плана на смену -->
+          <div id="personalPlanHint" class="bg-[#0b0e14] border border-[#232a3b] rounded-xl p-2.5 text-[11px] text-gray-400"></div>
+
+          <!-- Поля ввода факта по 7 показателям -->
+          <div id="factMetricsInputs" class="grid grid-cols-2 gap-2"></div>
+
+          <button onclick="saveDailyFactEntry()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl text-xs shadow-lg shadow-emerald-600/20">
+            ✅ Сохранить факт в зачёт периода
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= ВКЛАДКА 3: РЕЙТИНГ (ТАБЛИЦА) ================= -->
+    <section id="tab-rating" class="space-y-3 hidden">
+      <div class="bg-[#151923] border border-[#232a3b] rounded-2xl p-3.5">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="text-sm font-bold text-white">Рейтинг сотрудников</h2>
+            <p class="text-[11px] text-gray-400">Личный план зависит от отработанных часов</p>
+          </div>
+          <button onclick="copyRatingToChat()" class="text-xs bg-blue-600/20 border border-blue-500/30 text-blue-300 px-2.5 py-1.5 rounded-xl font-medium">
+            📋 В чат
+          </button>
+        </div>
+
+        <!-- Горизонтальная таблица по всем 7 показателям -->
+        <div class="overflow-x-auto -mx-3.5 px-3.5">
+          <table class="w-full text-left border-collapse min-w-[540px]">
+            <thead>
+              <tr id="ratingTableHead" class="border-b border-[#232a3b] text-[11px] text-gray-400"></tr>
+            </thead>
+            <tbody id="ratingTableBody" class="divide-y divide-[#232a3b] text-xs"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= ВКЛАДКА 4: ИСТОРИЯ ================= -->
+    <section id="tab-history" class="space-y-3 hidden">
+      <!-- Журнал внесённых смен -->
+      <div class="bg-[#151923] border border-[#232a3b] rounded-2xl p-3.5 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-white">Журнал внесённых смен</span>
+          <span id="logsCountBadge" class="text-[11px] text-gray-400">0 записей</span>
+        </div>
+        <div id="shiftLogsList" class="space-y-1.5 max-h-80 overflow-y-auto"></div>
+      </div>
+
+      <!-- Архив периодов -->
+      <div class="bg-[#151923] border border-[#232a3b] rounded-2xl p-3.5 space-y-2.5">
+        <span class="text-xs font-bold text-white block">Архив периодов (недель)</span>
+        <div id="archivePeriodsList" class="space-y-1.5"></div>
+      </div>
+    </section>
+
+    <!-- ================= ВКЛАДКА 5: НАСТРОЙКИ (ТОЛЬКО АДМИН) ================= -->
+    <section id="tab-settings" class="space-y-3 hidden">
+      <!-- 1. Параметры текущего периода и планы -->
+      <div class="bg-[#151923] border border-[#232a3b] rounded-2xl p-3.5 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-white">Текущий период и планы</span>
+          <button onclick="createNewPeriodPrompt()" class="text-[11px] bg-blue-600 text-white px-2.5 py-1 rounded-lg font-medium">
+            + Новая неделя
+          </button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div class="col-span-3">
+            <label class="text-[11px] text-gray-400">Название периода</label>
+            <input id="setPeriodTitle" type="text" class="w-full bg-[#0b0e14] border border-[#232a3b] rounded-xl px-2.5 py-1.5 text-xs text-white mt-0.5" />
+          </div>
+          <div>
+            <label class="text-[11px] text-gray-400">С даты</label>
+            <input id="setStartDate" type="date" onchange="recalcDaysFromDates()" class="w-full bg-[#0b0e14] border border-[#232a3b] rounded-xl px-2 py-1.5 text-xs text-white mt-0.5" />
+          </div>
+          <div>
+            <label class="text-[11px] text-gray-400">По дату</label>
+            <input id="setEndDate" type="date" onchange="recalcDaysFromDates()" class="w-full bg-[#0b0e14] border border-[#232a3b] rounded-xl px-2 py-1.5 text-xs text-white mt-0.5" />
+          </div>
+          <div>
+            <label class="text-[11px] text-gray-400">Дней всего</label>
+            <input id="setTotalDays" type="number" min="1" max="60" class="w-full bg-[#0b0e14] border border-[#232a3b] rounded-xl px-2.5 py-1.5 text-xs font-bold text-white mt-0.5" />
+          </div>
+        </div>
+
+        <div class="pt-1">
+          <span class="text-[11px] text-gray-400 block mb-1.5">Планы магазина на весь период:</span>
+          <div id="settingsPeriodPlans" class="grid grid-cols-2 gap-2"></div>
+        </div>
+
+        <button onclick="savePeriodSettings()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-xs">
+          💾 Сохранить планы и даты
+        </button>
+      </div>
+
+      <!-- 2. Ручная корректировка факта и часов сотрудников -->
+      <div class="bg-[#151923] border border-[#232a3b] rounded-2xl p-3.5 space-y-2.5">
+        <span class="text-xs font-bold text-white block">Корректировка факта / часов сотрудника</span>
+        <select id="editEmpSelect" onchange="renderDirectEmpEditor()" class="w-full bg-[#0b0e14] border border-[#232a3b] rounded-xl px-3 py-2 text-xs text-white"></select>
+        <div id="directEmpEditorGrid" class="grid grid-cols-2 gap-2"></div>
+        <button onclick="saveDirectEmpFact()" class="w-full bg-[#0b0e14] border border-[#232a3b] hover:border-blue-500 text-gray-200 font-semibold py-2 rounded-xl text-xs">
+          Обновить цифры сотрудника
+        </button>
+      </div>
+
+      <!-- 3. Сотрудники и Табельные номера -->
+      <div class="bg-[#151923] border border-[#232a3b] rounded-2xl p-3.5 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-white">Сотрудники и Табельные номера</span>
+          <span class="text-[11px] text-gray-400">Админ: <b id="adminTabLabel" class="text-blue-400">0000</b></span>
+        </div>
+        <div id="staffSettingsList" class="space-y-1.5"></div>
+        <div class="grid grid-cols-3 gap-1.5 pt-1">
+          <input id="newStaffName" type="text" placeholder="Имя" class="bg-[#0b0e14] border border-[#232a3b] rounded-xl px-2.5 py-2 text-xs text-white" />
+          <input id="newStaffTab" type="tel" placeholder="Табельный №" class="bg-[#0b0e14] border border-[#232a3b] rounded-xl px-2.5 py-2 text-xs text-white" />
+          <button onclick="addStaffMember()" class="bg-blue-600 text-white rounded-xl text-xs font-semibold">+ Добавить</button>
+        </div>
+      </div>
+
+      <!-- 4. Облако Google Таблицы -->
+      <div class="bg-[#151923] border border-[#232a3b] rounded-2xl p-3.5 space-y-2">
+        <span class="text-xs font-bold text-white block">Синхронизация с Google Таблицей</span>
+        <input id="gasUrlInput" type="url" class="w-full bg-[#0b0e14] border border-[#232a3b] rounded-xl px-2.5 py-1.5 text-[11px] text-gray-300" />
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="loadFromCloud(true)" class="bg-[#0b0e14] border border-[#232a3b] text-gray-200 py-2 rounded-xl text-xs font-medium">⬇️ Загрузить из БД</button>
+          <button onclick="syncWithCloud(true)" class="bg-emerald-600 text-white py-2 rounded-xl text-xs font-medium">⬆️ Отправить в БД</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+  <nav class="fixed bottom-0 inset-x-0 z-40 bg-[#151923]/95 backdrop-blur-md border-t border-[#232a3b]">
+    <div id="bottomNavGrid" class="max-w-md mx-auto grid grid-cols-5 py-1.5">
+      <button onclick="switchTab('summary')" id="nav-summary" class="flex flex-col items-center py-1 text-blue-400">
+        <span class="text-base">📊</span>
+        <span class="text-[10px] font-medium mt-0.5">Сводка</span>
+      </button>
+      <button onclick="switchTab('input')" id="nav-input" class="flex flex-col items-center py-1 text-gray-400">
+        <span class="text-base">✍️</span>
+        <span class="text-[10px] font-medium mt-0.5">Внести</span>
+      </button>
+      <button onclick="switchTab('rating')" id="nav-rating" class="flex flex-col items-center py-1 text-gray-400">
+        <span class="text-base">🏆</span>
+        <span class="text-[10px] font-medium mt-0.5">Рейтинг</span>
+      </button>
+      <button onclick="switchTab('history')" id="nav-history" class="flex flex-col items-center py-1 text-gray-400">
+        <span class="text-base">📜</span>
+        <span class="text-[10px] font-medium mt-0.5">История</span>
+      </button>
+      <button onclick="switchTab('settings')" id="nav-settings" class="flex flex-col items-center py-1 text-gray-400">
+        <span class="text-base">⚙️</span>
+        <span class="text-[10px] font-medium mt-0.5">Настройки</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ -->
+  <div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity"></div>
+
+  <script>
+    // ВШИТАЯ ССЫЛКА НА ВАШ GOOGLE APPS SCRIPT
+    const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyR7Gtr2-emzgBT_i2kQTQY17ZHTGeSsAzxGS1JXRQaONBAs8y-Cfwyf0Ytc_qkc2lq/exec";
+
+    // 7 ПОКАЗАТЕЛЕЙ
+    const METRICS = [
+      { id: 'sim',   name: 'Сим',              short: 'Сим',   icon: '📱', isMoney: false },
+      { id: 'abon',  name: 'Абоны',            short: 'Абон',  icon: '📅', isMoney: false },
+      { id: 'tov',   name: 'Товарная выручка', short: 'Товар', icon: '💰', isMoney: true  },
+      { id: 'acc',   name: 'Аксессуары',       short: 'Акс',   icon: '🎧', isMoney: true  },
+      { id: 'fin',   name: 'Фин услуги',       short: 'Фин',   icon: '💳', isMoney: false },
+      { id: 'mega',  name: 'Мега семья',       short: 'Семья', icon: '👨‍👩‍👧', isMoney: false },
+      { id: 'adapt', name: 'Адаптер',          short: 'Адапт', icon: '🔌', isMoney: false }
+    ];
+
+    const STORAGE_KEY = 'sales_tracker_clean_v5';
+    let showAllMetricDetails = false;
+    let expandedMetrics = {};
+    let currentUser = null; // { role: 'admin'|'staff', name, tabNum, empId }
+
+    function createEmptyMetrics(defaultVal = 0) {
+      const o = {};
+      METRICS.forEach(m => o[m.id] = defaultVal);
+      return o;
+    }
+
+    function getDefaultState() {
+      const today = new Date().toISOString().slice(0, 10);
+      return {
+        gasUrl: DEFAULT_GAS_URL,
+        adminTabNum: '0000',
+        staff: [
+          { id: 'e1', name: 'Алексей', tabNum: '101', shiftActive: true,  shiftHours: 10 },
+          { id: 'e2', name: 'Мария',   tabNum: '102', shiftActive: true,  shiftHours: 10 },
+          { id: 'e3', name: 'Дмитрий', tabNum: '103', shiftActive: false, shiftHours: 8  }
+        ],
+        dayPlan: { sim: 12, abon: 8, tov: 60000, acc: 12000, fin: 4, mega: 4, adapt: 3 },
+        activePeriodId: 'p1',
+        periods: [
+          {
+            id: 'p1',
+            title: 'Неделя 1–7',
+            startDate: today,
+            endDate: today,
+            totalDays: 7,
+            plans: { sim: 80, abon: 50, tov: 420000, acc: 84000, fin: 25, mega: 25, adapt: 20 },
+            empStats: {
+              'e1': { hours: 20, fact: { sim: 18, abon: 11, tov: 95000, acc: 19000, fin: 5, mega: 6, adapt: 4 } },
+              'e2': { hours: 20, fact: { sim: 15, abon: 10, tov: 82000, acc: 16500, fin: 6, mega: 5, adapt: 5 } },
+              'e3': { hours: 10, fact: { sim: 8,  abon: 5,  tov: 40000, acc: 8000,  fin: 2, mega: 3, adapt: 2 } }
             },
-            dailyShift: {
-                date: getTodayIso(),
-                roundToInt: true,
-                chatFormat: 'by_emp',
-                targets: {
-                    sim: 15,
-                    abony: 8,
-                    tovarka: 90000,
-                    acc: 15000,
-                    fin: 4,
-                    mega: 5,
-                    adapter: 6
-                },
-                employees: [
-                    { id: 'de1', name: 'Алексей', hours: 12 },
-                    { id: 'de2', name: 'Мария', hours: 8 }
-                ]
-            },
-            archives: []
-        };
+            logs: []
+          }
+        ]
+      };
+    }
 
-        let state = loadState();
+    let state = loadLocalState();
 
-        function loadState() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    return {
-                        ...defaultState,
-                        ...parsed,
-                        googleScriptUrl: (parsed.googleScriptUrl && parsed.googleScriptUrl.startsWith('https://')) ? parsed.googleScriptUrl : DEFAULT_GAS_URL,
-                        autoSync: parsed.autoSync !== undefined ? parsed.autoSync : true,
-                        period: { ...defaultState.period, ...(parsed.period || {}) },
-                        dailyShift: { ...defaultState.dailyShift, ...(parsed.dailyShift || {}) }
-                    };
-                }
-            } catch (e) {
-                console.error(e);
-            }
-            return JSON.parse(JSON.stringify(defaultState));
+    function loadLocalState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return getDefaultState();
+        const parsed = JSON.parse(raw);
+        if (!parsed.gasUrl) parsed.gasUrl = DEFAULT_GAS_URL;
+        if (!parsed.adminTabNum) parsed.adminTabNum = '0000';
+        return parsed;
+      } catch (e) {
+        return getDefaultState();
+      }
+    }
+
+    function saveLocalState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function getActivePeriod() {
+      let p = state.periods.find(x => x.id === state.activePeriodId);
+      if (!p) {
+        p = state.periods[0];
+        state.activePeriodId = p.id;
+      }
+      state.staff.forEach(s => {
+        if (!p.empStats[s.id]) {
+          p.empStats[s.id] = { hours: 0, fact: createEmptyMetrics(0) };
+        }
+      });
+      return p;
+    }
+
+    function fmt(num) {
+      return Math.round(Number(num) || 0).toLocaleString('ru-RU');
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.remove('opacity-0');
+      setTimeout(() => t.classList.add('opacity-0'), 2200);
+    }
+
+    // ================= АВТОРИЗАЦИЯ =================
+    function renderQuickLoginHints() {
+      const box = document.getElementById('quickLoginList');
+      let html = `<button onclick="quickFillTab('${state.adminTabNum}')" class="px-2.5 py-1 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-300">Админ: ${state.adminTabNum}</button>`;
+      state.staff.forEach(s => {
+        html += `<button onclick="quickFillTab('${s.tabNum}')" class="px-2.5 py-1 rounded-lg bg-[#0b0e14] border border-[#232a3b] text-gray-300">${s.name}: ${s.tabNum}</button>`;
+      });
+      box.innerHTML = html;
+    }
+
+    function quickFillTab(tab) {
+      document.getElementById('tabInput').value = tab;
+      handleLogin();
+    }
+
+    function handleLogin() {
+      const code = document.getElementById('tabInput').value.trim();
+      const err = document.getElementById('authError');
+      if (code === String(state.adminTabNum)) {
+        currentUser = { role: 'admin', name: 'Руководитель', tabNum: code, empId: null };
+      } else {
+        const emp = state.staff.find(s => String(s.tabNum) === code);
+        if (!emp) {
+          err.classList.remove('hidden');
+          return;
+        }
+        currentUser = { role: 'staff', name: emp.name, tabNum: emp.tabNum, empId: emp.id };
+      }
+      err.classList.add('hidden');
+      sessionStorage.setItem('active_tab_user', JSON.stringify(currentUser));
+      applyUserRoleUI();
+      document.getElementById('authModal').classList.add('hidden');
+      renderAll();
+    }
+
+    function logout() {
+      currentUser = null;
+      sessionStorage.removeItem('active_tab_user');
+      document.getElementById('tabInput').value = '';
+      renderQuickLoginHints();
+      document.getElementById('authModal').classList.remove('hidden');
+    }
+
+    function applyUserRoleUI() {
+      if (!currentUser) return;
+      const isAdmin = currentUser.role === 'admin';
+      const badge = document.getElementById('userRoleBadge');
+      badge.textContent = isAdmin ? 'АДМИН' : 'СОТРУДНИК';
+      badge.className = isAdmin
+        ? 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400'
+        : 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400';
+      document.getElementById('userNameLabel').textContent = currentUser.name;
+
+      // Навигация: скрываем Настройки у сотрудника
+      const navSettings = document.getElementById('nav-settings');
+      const navGrid = document.getElementById('bottomNavGrid');
+      if (isAdmin) {
+        navSettings.classList.remove('hidden');
+        navGrid.className = 'max-w-md mx-auto grid grid-cols-5 py-1.5';
+        document.getElementById('adminInputSwitch').classList.remove('hidden');
+      } else {
+        navSettings.classList.add('hidden');
+        navGrid.className = 'max-w-md mx-auto grid grid-cols-4 py-1.5';
+        document.getElementById('adminInputSwitch').classList.add('hidden');
+        setInputMode('fact');
+      }
+    }
+
+    // ================= ВКЛАДКА 1: МИНИМАЛИСТИЧНАЯ СВОДКА =================
+    function getElapsedDays(period) {
+      const start = new Date(period.startDate);
+      const now = new Date();
+      const diff = Math.floor((now - start) / (1000 * 60 * 60 * 24)) + 1;
+      if (isNaN(diff) || diff < 1) return 1;
+      return Math.min(period.totalDays, diff);
+    }
+
+    function toggleMetricDetail(id) {
+      expandedMetrics[id] = !expandedMetrics[id];
+      renderSummary();
+    }
+
+    function toggleAllDetails() {
+      showAllMetricDetails = !showAllMetricDetails;
+      METRICS.forEach(m => expandedMetrics[m.id] = showAllMetricDetails);
+      document.getElementById('btnToggleDetails').textContent = showAllMetricDetails ? 'Скрыть детали' : 'Детали';
+      renderSummary();
+    }
+
+    function renderSummary() {
+      const p = getActivePeriod();
+      document.getElementById('headerPeriodTitle').textContent = p.title;
+
+      const elapsed = getElapsedDays(p);
+      const totalDays = Math.max(1, Number(p.totalDays) || 7);
+      const remDays = Math.max(1, totalDays - elapsed + 1);
+
+      // Суммируем факт всех сотрудников
+      const totals = createEmptyMetrics(0);
+      Object.values(p.empStats).forEach(st => {
+        METRICS.forEach(m => totals[m.id] += Number(st.fact[m.id] || 0));
+      });
+
+      let sumPct = 0;
+      let sumForecast = 0;
+      let activeCount = 0;
+
+      const listEl = document.getElementById('summaryMetricsList');
+      let html = '';
+
+      METRICS.forEach(m => {
+        const plan = Number(p.plans[m.id] || 0);
+        const fact = Number(totals[m.id] || 0);
+        const pct = plan > 0 ? Math.round((fact / plan) * 100) : 0;
+        const rem = Math.max(0, plan - fact);
+        const needPerDay = Math.ceil(rem / remDays);
+        const forecastVal = Math.round((fact / elapsed) * totalDays);
+        const forecastPct = plan > 0 ? Math.round((forecastVal / plan) * 100) : 0;
+
+        if (plan > 0) {
+          sumPct += Math.min(150, pct);
+          sumForecast += Math.min(150, forecastPct);
+          activeCount++;
         }
 
-        let autoSyncDebounceTimer = null;
-        function scheduleBackgroundSync() {
-            if (!state.autoSync || !state.googleScriptUrl || !state.googleScriptUrl.startsWith('https://')) return;
-            if (autoSyncDebounceTimer) clearTimeout(autoSyncDebounceTimer);
-            autoSyncDebounceTimer = setTimeout(() => {
-                pushToGoogleCloud(true);
-            }, 900);
+        const barColor = pct >= 100 ? 'bg-emerald-500' : pct >= 70 ? 'bg-blue-500' : 'bg-amber-500';
+        const pctColor = pct >= 100 ? 'text-emerald-400' : pct >= 70 ? 'text-blue-400' : 'text-amber-400';
+        const isOpen = !!expandedMetrics[m.id];
+
+        html += `
+          <div class="px-3.5 py-2.5 hover:bg-[#1c2230]/60 transition cursor-pointer" onclick="toggleMetricDetail('${m.id}')">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-sm">${m.icon}</span>
+                <span class="text-xs font-semibold text-gray-100 truncate">${m.name}</span>
+              </div>
+              <div class="flex items-center gap-2.5 shrink-0">
+                <span class="text-xs font-bold text-white">${fmt(fact)} <span class="text-gray-500 font-normal">/ ${fmt(plan)}</span></span>
+                <span class="text-xs font-extrabold w-10 text-right ${pctColor}">${pct}%</span>
+              </div>
+            </div>
+            <div class="w-full h-1 bg-[#0b0e14] rounded-full overflow-hidden mt-1.5">
+              <div class="h-full ${barColor}" style="width:${Math.min(100, pct)}%"></div>
+            </div>
+            ${isOpen ? `
+              <div class="grid grid-cols-3 gap-1.5 mt-2 pt-2 border-t border-[#232a3b]/70 text-[11px] text-gray-400">
+                <div>Остаток: <b class="text-gray-200">${fmt(rem)}</b></div>
+                <div class="text-center">В день: <b class="text-blue-300">${fmt(needPerDay)}</b></div>
+                <div class="text-right">Прогноз: <b class="${forecastPct >= 100 ? 'text-emerald-400' : 'text-amber-400'}">${forecastPct}%</b></div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+
+      listEl.innerHTML = html;
+
+      const avgPct = activeCount > 0 ? Math.round(sumPct / activeCount) : 0;
+      const avgForecast = activeCount > 0 ? Math.round(sumForecast / activeCount) : 0;
+
+      document.getElementById('sumAvgPct').textContent = avgPct + '%';
+      const fEl = document.getElementById('sumForecastPct');
+      fEl.textContent = avgForecast + '%';
+      fEl.className = `text-xl font-extrabold mt-0.5 ${avgForecast >= 100 ? 'text-emerald-400' : 'text-amber-400'}`;
+      document.getElementById('sumDaysBadge').textContent = `${elapsed} / ${totalDays}`;
+      document.getElementById('sumMainBar').style.width = Math.min(100, avgPct) + '%';
+    }
+
+    // ================= ВКЛАДКА 2: ВНЕСТИ (ЧАСЫ И ФАКТ) =================
+    function setInputMode(mode) {
+      const isShift = mode === 'shift';
+      document.getElementById('inputShiftBlock').classList.toggle('hidden', !isShift);
+      document.getElementById('inputFactBlock').classList.toggle('hidden', isShift);
+      document.getElementById('btnModeShift').className = isShift
+        ? 'py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white'
+        : 'py-2 rounded-xl text-xs font-semibold text-gray-400';
+      document.getElementById('btnModeFact').className = !isShift
+        ? 'py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white'
+        : 'py-2 rounded-xl text-xs font-semibold text-gray-400';
+    }
+
+    function distributeSmart(totalPlan, hoursArray) {
+      const totalH = hoursArray.reduce((a, b) => a + b, 0);
+      if (totalH <= 0 || totalPlan <= 0) return hoursArray.map(() => 0);
+      const exact = hoursArray.map(h => (h / totalH) * totalPlan);
+      const floored = exact.map(v => Math.floor(v));
+      let rem = Math.round(totalPlan - floored.reduce((a, b) => a + b, 0));
+      const order = exact.map((v, idx) => ({ idx, frac: v - floored[idx] })).sort((a, b) => b.frac - a.frac);
+      for (let i = 0; i < rem && i < order.length; i++) {
+        floored[order[i].idx]++;
+      }
+      return floored;
+    }
+
+    function renderInputTab() {
+      // 1. Список смены
+      const staffBox = document.getElementById('shiftStaffList');
+      let totalH = 0;
+      staffBox.innerHTML = state.staff.map(s => {
+        if (s.shiftActive) totalH += Number(s.shiftHours || 0);
+        return `
+          <div class="flex items-center justify-between bg-[#0b0e14] border border-[#232a3b] rounded-xl px-3 py-2">
+            <label class="flex items-center gap-2 text-xs font-semibold text-white">
+              <input type="checkbox" ${s.shiftActive ? 'checked' : ''} onchange="toggleStaffShift('${s.id}', this.checked)" class="rounded" />
+              ${s.name}
+            </label>
+            <div class="flex items-center gap-1.5">
+              <button onclick="changeStaffShiftHours('${s.id}', -1)" class="w-6 h-6 rounded-lg bg-[#151923] text-gray-300 text-xs">-</button>
+              <input type="number" value="${s.shiftHours}" onchange="setStaffShiftHours('${s.id}', this.value)" class="w-10 text-center bg-transparent text-xs font-bold text-white" />
+              <button onclick="changeStaffShiftHours('${s.id}', 1)" class="w-6 h-6 rounded-lg bg-[#151923] text-gray-300 text-xs">+</button>
+              <span class="text-[11px] text-gray-500">ч</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('shiftTotalHoursBadge').textContent = `Всего: ${totalH} ч.`;
+
+      // 2. Поля дневного плана
+      document.getElementById('dayPlanInputs').innerHTML = METRICS.map(m => `
+        <div class="bg-[#0b0e14] border border-[#232a3b] rounded-xl px-2.5 py-1.5">
+          <label class="text-[10px] text-gray-400 block">${m.icon} ${m.name}</label>
+          <input type="number" value="${state.dayPlan[m.id] || 0}" onchange="updateDayPlanVal('${m.id}', this.value)"
+            class="w-full bg-transparent text-xs font-bold text-white outline-none mt-0.5" />
+        </div>
+      `).join('');
+
+      renderShiftPreview();
+
+      // 3. Блок внесения факта
+      const dateInp = document.getElementById('factDateInput');
+      if (!dateInp.value) dateInp.value = new Date().toISOString().slice(0, 10);
+
+      const sel = document.getElementById('factEmployeeSelect');
+      if (currentUser && currentUser.role === 'staff') {
+        sel.innerHTML = `<option value="${currentUser.empId}">${currentUser.name}</option>`;
+        sel.disabled = true;
+      } else {
+        sel.disabled = false;
+        sel.innerHTML = state.staff.map(s => `<option value="${s.id}">${s.name} (таб. ${s.tabNum})</option>`).join('');
+      }
+
+      document.getElementById('factMetricsInputs').innerHTML = METRICS.map(m => `
+        <div class="bg-[#0b0e14] border border-[#232a3b] rounded-xl px-2.5 py-2">
+          <label class="text-[10px] text-gray-400 block">${m.icon} ${m.name}</label>
+          <input type="number" id="factInp_${m.id}" placeholder="0" class="w-full bg-transparent text-sm font-bold text-white outline-none mt-0.5" />
+        </div>
+      `).join('');
+
+      updateEmployeePersonalHint();
+    }
+
+    function toggleStaffShift(id, checked) {
+      const s = state.staff.find(x => x.id === id);
+      if (s) s.shiftActive = checked;
+      saveLocalState();
+      renderInputTab();
+    }
+
+    function changeStaffShiftHours(id, delta) {
+      const s = state.staff.find(x => x.id === id);
+      if (s) s.shiftHours = Math.max(0, Number(s.shiftHours || 0) + delta);
+      saveLocalState();
+      renderInputTab();
+    }
+
+    function setStaffShiftHours(id, val) {
+      const s = state.staff.find(x => x.id === id);
+      if (s) s.shiftHours = Math.max(0, Number(val) || 0);
+      saveLocalState();
+      renderInputTab();
+    }
+
+    function updateDayPlanVal(metricId, val) {
+      state.dayPlan[metricId] = Math.max(0, Number(val) || 0);
+      saveLocalState();
+      renderShiftPreview();
+    }
+
+    function fillDayPlanFromPeriod(mode) {
+      const p = getActivePeriod();
+      const totalDays = Math.max(1, Number(p.totalDays) || 7);
+      const elapsed = getElapsedDays(p);
+      const remDays = Math.max(1, totalDays - elapsed + 1);
+
+      const totals = createEmptyMetrics(0);
+      Object.values(p.empStats).forEach(st => {
+        METRICS.forEach(m => totals[m.id] += Number(st.fact[m.id] || 0));
+      });
+
+      METRICS.forEach(m => {
+        const plan = Number(p.plans[m.id] || 0);
+        if (mode === 'avg') {
+          state.dayPlan[m.id] = Math.ceil(plan / totalDays);
+        } else {
+          const rem = Math.max(0, plan - totals[m.id]);
+          state.dayPlan[m.id] = Math.ceil(rem / remDays);
         }
+      });
+      saveLocalState();
+      renderInputTab();
+      showToast(mode === 'avg' ? 'Дневной план = План ÷ Дни' : 'Дневной план из остатка');
+    }
 
-        function saveState(triggerCloud = false) {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-                updateHeaderAndCloudStatus();
-                if (triggerCloud) {
-                    scheduleBackgroundSync();
-                }
-            } catch (e) {
-                console.error(e);
-            }
+    function buildShiftChatText() {
+      const active = state.staff.filter(s => s.shiftActive && s.shiftHours > 0);
+      const hideZero = document.getElementById('hideZeroInChat')?.checked;
+      const dateStr = new Date().toLocaleDateString('ru-RU');
+      if (active.length === 0) return 'Выберите сотрудников на смене';
+
+      const hoursArr = active.map(s => Number(s.shiftHours));
+      const perMetric = {};
+      METRICS.forEach(m => {
+        perMetric[m.id] = distributeSmart(Number(state.dayPlan[m.id] || 0), hoursArr);
+      });
+
+      let lines = [`📊 ПЛАН НА СМЕНУ (${dateStr})`, `━━━━━━━━━━━━━━`];
+      active.forEach((s, idx) => {
+        lines.push(`\n👤 ${s.name} (${s.shiftHours} ч.):`);
+        METRICS.forEach(m => {
+          const val = perMetric[m.id][idx];
+          if (hideZero && val === 0) return;
+          lines.push(`${m.icon} ${m.name}: ${fmt(val)} / `);
+        });
+      });
+      return lines.join('\n');
+    }
+
+    function renderShiftPreview() {
+      const el = document.getElementById('shiftChatPreview');
+      if (el) el.textContent = buildShiftChatText();
+    }
+
+    function copyShiftToChat() {
+      navigator.clipboard.writeText(buildShiftChatText());
+      showToast('Скопировано для чата!');
+    }
+
+    function shareShiftToChat() {
+      const text = buildShiftChatText();
+      if (navigator.share) {
+        navigator.share({ text });
+      } else {
+        copyShiftToChat();
+      }
+    }
+
+    function updateEmployeePersonalHint() {
+      const empId = document.getElementById('factEmployeeSelect')?.value;
+      const active = state.staff.filter(s => s.shiftActive && s.shiftHours > 0);
+      const idx = active.findIndex(s => s.id === empId);
+      const box = document.getElementById('personalPlanHint');
+      if (!box) return;
+      if (idx === -1) {
+        box.textContent = 'Сотрудник сегодня не отмечен в расчёте смены';
+        return;
+      }
+      const hoursArr = active.map(s => Number(s.shiftHours));
+      const parts = [];
+      METRICS.forEach(m => {
+        const val = distributeSmart(Number(state.dayPlan[m.id] || 0), hoursArr)[idx];
+        if (val > 0) parts.push(`${m.short}: ${fmt(val)}`);
+      });
+      box.innerHTML = `<span class="text-gray-300 font-semibold">План на смену (${active[idx].shiftHours}ч):</span> ` + (parts.join(' • ') || 'не задан');
+    }
+
+    function saveDailyFactEntry() {
+      const p = getActivePeriod();
+      const empId = document.getElementById('factEmployeeSelect').value;
+      const emp = state.staff.find(s => s.id === empId);
+      if (!emp) return;
+
+      const hours = Math.max(0, Number(document.getElementById('factHoursInput').value) || 0);
+      const dateStr = document.getElementById('factDateInput').value || new Date().toISOString().slice(0, 10);
+
+      const addedFact = createEmptyMetrics(0);
+      let hasAny = hours > 0;
+      METRICS.forEach(m => {
+        const v = Math.max(0, Number(document.getElementById(`factInp_${m.id}`).value) || 0);
+        addedFact[m.id] = v;
+        if (v > 0) hasAny = true;
+        document.getElementById(`factInp_${m.id}`).value = '';
+      });
+
+      if (!hasAny) {
+        showToast('Введите цифры факта или часы');
+        return;
+      }
+
+      if (!p.empStats[empId]) p.empStats[empId] = { hours: 0, fact: createEmptyMetrics(0) };
+      p.empStats[empId].hours += hours;
+      METRICS.forEach(m => {
+        p.empStats[empId].fact[m.id] = Number(p.empStats[empId].fact[m.id] || 0) + addedFact[m.id];
+      });
+
+      p.logs.unshift({
+        id: 'log_' + Date.now(),
+        date: dateStr,
+        empId,
+        empName: emp.name,
+        hours,
+        fact: addedFact
+      });
+
+      saveLocalState();
+      renderAll();
+      syncWithCloud(false);
+      showToast(`Факт (${emp.name}) сохранён!`);
+    }
+
+    // ================= ВКЛАДКА 3: РЕЙТИНГ (ТАБЛИЦА) =================
+    function calculateLeaderboard() {
+      const p = getActivePeriod();
+      const totalHours = state.staff.reduce((acc, s) => acc + Number(p.empStats[s.id]?.hours || 0), 0);
+
+      return state.staff.map(s => {
+        const st = p.empStats[s.id] || { hours: 0, fact: createEmptyMetrics(0) };
+        const hShare = totalHours > 0 ? (st.hours / totalHours) : (1 / Math.max(1, state.staff.length));
+        let sumPct = 0;
+        let activeMetrics = 0;
+        const mData = {};
+
+        METRICS.forEach(m => {
+          const storePlan = Number(p.plans[m.id] || 0);
+          const personalPlan = Math.round(storePlan * hShare);
+          const fact = Number(st.fact[m.id] || 0);
+          const pct = personalPlan > 0 ? Math.round((fact / personalPlan) * 100) : 0;
+          if (personalPlan > 0) {
+            sumPct += Math.min(150, pct);
+            activeMetrics++;
+          }
+          mData[m.id] = { fact, personalPlan, pct };
+        });
+
+        const avgPct = activeMetrics > 0 ? Math.round(sumPct / activeMetrics) : 0;
+        return { emp: s, hours: st.hours, avgPct, mData };
+      }).sort((a, b) => b.avgPct - a.avgPct);
+    }
+
+    function renderRating() {
+      const rows = calculateLeaderboard();
+      const head = document.getElementById('ratingTableHead');
+      head.innerHTML = `
+        <th class="py-2 pr-2"># Сотрудник</th>
+        <th class="py-2 px-2 text-center">Часы</th>
+        <th class="py-2 px-2 text-center">%</th>
+        ${METRICS.map(m => `<th class="py-2 px-2 text-right">${m.short}</th>`).join('')}
+      `;
+
+      const body = document.getElementById('ratingTableBody');
+      body.innerHTML = rows.map((r, i) => {
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+        const isMe = currentUser && currentUser.empId === r.emp.id;
+        return `
+          <tr class="${isMe ? 'bg-blue-500/10' : ''}">
+            <td class="py-2.5 pr-2 font-semibold text-white whitespace-nowrap">
+              ${medal} ${r.emp.name} ${isMe ? '<span class="text-[10px] text-blue-400">(Вы)</span>' : ''}
+            </td>
+            <td class="py-2.5 px-2 text-center text-gray-400">${r.hours}ч</td>
+            <td class="py-2.5 px-2 text-center font-extrabold ${r.avgPct >= 100 ? 'text-emerald-400' : 'text-blue-400'}">${r.avgPct}%</td>
+            ${METRICS.map(m => {
+              const d = r.mData[m.id];
+              return `<td class="py-2.5 px-2 text-right whitespace-nowrap">
+                <span class="font-bold text-gray-100">${fmt(d.fact)}</span>
+                <span class="text-[10px] text-gray-500">/${fmt(d.personalPlan)}</span>
+              </td>`;
+            }).join('')}
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function copyRatingToChat() {
+      const p = getActivePeriod();
+      const rows = calculateLeaderboard();
+      let lines = [`🏆 РЕЙТИНГ: ${p.title}`, `━━━━━━━━━━━━━━`];
+      rows.forEach((r, i) => {
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+        lines.push(`${medal} ${r.emp.name} (${r.hours}ч) — ${r.avgPct}%`);
+      });
+      navigator.clipboard.writeText(lines.join('\n'));
+      showToast('Рейтинг скопирован!');
+    }
+
+    // ================= ВКЛАДКА 4: ИСТОРИЯ =================
+    function renderHistory() {
+      const p = getActivePeriod();
+      const isAdmin = currentUser && currentUser.role === 'admin';
+      document.getElementById('logsCountBadge').textContent = `${p.logs.length} записей`;
+
+      const logsBox = document.getElementById('shiftLogsList');
+      if (p.logs.length === 0) {
+        logsBox.innerHTML = `<div class="text-xs text-gray-500 text-center py-4">Записей смен пока нет</div>`;
+      } else {
+        logsBox.innerHTML = p.logs.map(l => {
+          const items = METRICS.filter(m => Number(l.fact[m.id]) > 0).map(m => `${m.short}: ${fmt(l.fact[m.id])}`).join(' • ');
+          return `
+            <div class="bg-[#0b0e14] border border-[#232a3b] rounded-xl p-2.5 flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <div class="text-xs font-bold text-white">${l.empName} <span class="text-gray-400 font-normal">(${l.hours}ч • ${l.date})</span></div>
+                <div class="text-[11px] text-gray-400 truncate mt-0.5">${items || 'Только часы'}</div>
+              </div>
+              ${isAdmin ? `<button onclick="deleteShiftLog('${l.id}')" class="text-xs text-red-400 px-2 py-1 rounded bg-red-500/10">✕</button>` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+
+      const archBox = document.getElementById('archivePeriodsList');
+      archBox.innerHTML = state.periods.map(per => {
+        const active = per.id === state.activePeriodId;
+        return `
+          <div class="bg-[#0b0e14] border ${active ? 'border-blue-500' : 'border-[#232a3b]'} rounded-xl p-2.5 flex items-center justify-between">
+            <div>
+              <div class="text-xs font-bold text-white">${per.title}</div>
+              <div class="text-[11px] text-gray-400">${per.startDate} — ${per.endDate} (${per.totalDays} дн.)</div>
+            </div>
+            ${active ? `<span class="text-[10px] font-bold text-blue-400">АКТИВЕН</span>` : (isAdmin ? `<button onclick="switchActivePeriod('${per.id}')" class="text-xs bg-[#151923] px-2.5 py-1 rounded-lg text-gray-200">Открыть</button>` : '')}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function deleteShiftLog(logId) {
+      const p = getActivePeriod();
+      const idx = p.logs.findIndex(x => x.id === logId);
+      if (idx === -1) return;
+      const log = p.logs[idx];
+      const st = p.empStats[log.empId];
+      if (st) {
+        st.hours = Math.max(0, st.hours - Number(log.hours || 0));
+        METRICS.forEach(m => {
+          st.fact[m.id] = Math.max(0, Number(st.fact[m.id] || 0) - Number(log.fact[m.id] || 0));
+        });
+      }
+      p.logs.splice(idx, 1);
+      saveLocalState();
+      renderAll();
+      syncWithCloud(false);
+      showToast('Запись удалена и вычтена');
+    }
+
+    function switchActivePeriod(id) {
+      state.activePeriodId = id;
+      saveLocalState();
+      renderAll();
+      showToast('Период переключён');
+    }
+
+    // ================= ВКЛАДКА 5: НАСТРОЙКИ =================
+    function recalcDaysFromDates() {
+      const s = new Date(document.getElementById('setStartDate').value);
+      const e = new Date(document.getElementById('setEndDate').value);
+      const diff = Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1;
+      if (diff > 0) document.getElementById('setTotalDays').value = diff;
+    }
+
+    function renderSettings() {
+      if (!currentUser || currentUser.role !== 'admin') return;
+      const p = getActivePeriod();
+      document.getElementById('setPeriodTitle').value = p.title;
+      document.getElementById('setStartDate').value = p.startDate;
+      document.getElementById('setEndDate').value = p.endDate;
+      document.getElementById('setTotalDays').value = p.totalDays;
+
+      document.getElementById('settingsPeriodPlans').innerHTML = METRICS.map(m => `
+        <div class="bg-[#0b0e14] border border-[#232a3b] rounded-xl px-2.5 py-1.5">
+          <label class="text-[10px] text-gray-400 block">${m.icon} ${m.name}</label>
+          <input type="number" id="setPlan_${m.id}" value="${p.plans[m.id] || 0}" class="w-full bg-transparent text-xs font-bold text-white outline-none mt-0.5" />
+        </div>
+      `).join('');
+
+      const editSel = document.getElementById('editEmpSelect');
+      editSel.innerHTML = state.staff.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+      renderDirectEmpEditor();
+
+      document.getElementById('adminTabLabel').textContent = state.adminTabNum;
+      document.getElementById('staffSettingsList').innerHTML = state.staff.map(s => `
+        <div class="flex items-center justify-between bg-[#0b0e14] border border-[#232a3b] rounded-xl px-3 py-1.5 text-xs">
+          <span class="font-semibold text-white">${s.name}</span>
+          <div class="flex items-center gap-2">
+            <span class="text-gray-400">Таб: <b class="text-blue-300">${s.tabNum}</b></span>
+            <button onclick="removeStaffMember('${s.id}')" class="text-red-400">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('gasUrlInput').value = state.gasUrl || DEFAULT_GAS_URL;
+    }
+
+    function savePeriodSettings() {
+      const p = getActivePeriod();
+      p.title = document.getElementById('setPeriodTitle').value.trim() || 'Период';
+      p.startDate = document.getElementById('setStartDate').value;
+      p.endDate = document.getElementById('setEndDate').value;
+      p.totalDays = Math.max(1, Number(document.getElementById('setTotalDays').value) || 7);
+      METRICS.forEach(m => {
+        p.plans[m.id] = Math.max(0, Number(document.getElementById(`setPlan_${m.id}`).value) || 0);
+      });
+      saveLocalState();
+      renderAll();
+      syncWithCloud(false);
+      showToast('Планы периода сохранены');
+    }
+
+    function createNewPeriodPrompt() {
+      const title = prompt('Название нового периода (например, Неделя 8–14):', 'Новая неделя');
+      if (!title) return;
+      const days = Math.max(1, Number(prompt('Количество дней в периоде (3, 7, 10 и т.д.):', '7')) || 7);
+      const today = new Date().toISOString().slice(0, 10);
+      const prev = getActivePeriod();
+      const newId = 'p_' + Date.now();
+      const empStats = {};
+      state.staff.forEach(s => empStats[s.id] = { hours: 0, fact: createEmptyMetrics(0) });
+
+      state.periods.unshift({
+        id: newId,
+        title,
+        startDate: today,
+        endDate: today,
+        totalDays: days,
+        plans: { ...prev.plans },
+        empStats,
+        logs: []
+      });
+      state.activePeriodId = newId;
+      saveLocalState();
+      renderAll();
+      syncWithCloud(false);
+      showToast('Создан новый период!');
+    }
+
+    function renderDirectEmpEditor() {
+      const empId = document.getElementById('editEmpSelect')?.value;
+      const p = getActivePeriod();
+      if (!empId || !p.empStats[empId]) return;
+      const st = p.empStats[empId];
+      let html = `
+        <div class="col-span-2 bg-[#0b0e14] border border-[#232a3b] rounded-xl px-2.5 py-1.5">
+          <label class="text-[10px] text-gray-400 block">Отработанные часы за период</label>
+          <input type="number" id="dirEmp_hours" value="${st.hours}" class="w-full bg-transparent text-xs font-bold text-white outline-none" />
+        </div>
+      `;
+      html += METRICS.map(m => `
+        <div class="bg-[#0b0e14] border border-[#232a3b] rounded-xl px-2.5 py-1.5">
+          <label class="text-[10px] text-gray-400 block">${m.icon} ${m.name}</label>
+          <input type="number" id="dirEmp_${m.id}" value="${st.fact[m.id] || 0}" class="w-full bg-transparent text-xs font-bold text-white outline-none" />
+        </div>
+      `).join('');
+      document.getElementById('directEmpEditorGrid').innerHTML = html;
+    }
+
+    function saveDirectEmpFact() {
+      const empId = document.getElementById('editEmpSelect').value;
+      const p = getActivePeriod();
+      if (!empId || !p.empStats[empId]) return;
+      p.empStats[empId].hours = Math.max(0, Number(document.getElementById('dirEmp_hours').value) || 0);
+      METRICS.forEach(m => {
+        p.empStats[empId].fact[m.id] = Math.max(0, Number(document.getElementById(`dirEmp_${m.id}`).value) || 0);
+      });
+      saveLocalState();
+      renderAll();
+      syncWithCloud(false);
+      showToast('Данные сотрудника обновлены');
+    }
+
+    function addStaffMember() {
+      const name = document.getElementById('newStaffName').value.trim();
+      const tab = document.getElementById('newStaffTab').value.trim();
+      if (!name || !tab) {
+        showToast('Укажите имя и табельный №');
+        return;
+      }
+      const id = 'e_' + Date.now();
+      state.staff.push({ id, name, tabNum: tab, shiftActive: true, shiftHours: 10 });
+      document.getElementById('newStaffName').value = '';
+      document.getElementById('newStaffTab').value = '';
+      saveLocalState();
+      renderAll();
+      syncWithCloud(false);
+      showToast('Сотрудник добавлен');
+    }
+
+    function removeStaffMember(id) {
+      if (state.staff.length <= 1) return;
+      state.staff = state.staff.filter(s => s.id !== id);
+      saveLocalState();
+      renderAll();
+      syncWithCloud(false);
+    }
+
+    // ================= GOOGLE ТАБЛИЦА (ОБЛАКО) =================
+    async function syncWithCloud(manual = false) {
+      const url = (document.getElementById('gasUrlInput')?.value || state.gasUrl || DEFAULT_GAS_URL).trim();
+      state.gasUrl = url;
+      saveLocalState();
+      const dot = document.getElementById('cloudDot');
+      dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+
+      try {
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'save', payload: state })
+        });
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        const now = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('syncTimeText').textContent = now;
+        if (manual) showToast('Сохранено в Google Таблицу');
+      } catch (e) {
+        dot.className = 'w-2 h-2 rounded-full bg-red-400';
+        if (manual) showToast('Ошибка отправки в облако');
+      }
+    }
+
+    async function loadFromCloud(manual = false) {
+      const url = (state.gasUrl || DEFAULT_GAS_URL).trim();
+      const dot = document.getElementById('cloudDot');
+      dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+      try {
+        const res = await fetch(url + '?action=load&t=' + Date.now());
+        const data = await res.json();
+        if (data && data.periods && data.staff) {
+          state = data;
+          if (!state.gasUrl) state.gasUrl = DEFAULT_GAS_URL;
+          saveLocalState();
+          renderQuickLoginHints();
+          renderAll();
+          dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+          if (manual) showToast('Данные загружены из Google Таблицы');
         }
-
-        // --- НАВИГАЦИЯ ПО 5 ВКЛАДКАМ ---
-        function switchTab(tab) {
-            state.activeTab = tab;
-            saveState();
-
-            const tabs = ['dashboard', 'input', 'leaderboard', 'history', 'settings'];
-            tabs.forEach(t => {
-                const mainEl = document.getElementById('tab_' + t);
-                const navBtn = document.getElementById('navBtn_' + t);
-                if (t === tab) {
-                    mainEl.classList.remove('hidden');
-                    navBtn.className = 'flex flex-col items-center justify-center py-1.5 rounded-xl transition bg-indigo-600/20 text-indigo-300 border border-indigo-500/30';
-                } else {
-                    mainEl.classList.add('hidden');
-                    navBtn.className = 'flex flex-col items-center justify-center py-1.5 rounded-xl transition text-slate-400 hover:text-slate-200';
-                }
-            });
-
-            renderAll();
-        }
-
-        function setInputSubMode(mode) {
-            state.inputSubMode = mode;
-            saveState();
-            const isPlan = mode === 'shift_plan';
-            document.getElementById('inputSub_shift_plan').classList.toggle('hidden', !isPlan);
-            document.getElementById('inputSub_fact_entry').classList.toggle('hidden', isPlan);
-
-            document.getElementById('subBtn_shift_plan').className = isPlan
-                ? 'py-2.5 px-3 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5 bg-indigo-600 text-white shadow-md'
-                : 'py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400';
-
-            document.getElementById('subBtn_fact_entry').className = !isPlan
-                ? 'py-2.5 px-3 rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow-md'
-                : 'py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400';
-
-            renderInputTab();
-        }
-
-        // --- МАТЕМАТИКА ПЕРИОДА: ФАКТ, ПЛАН, ПРОГНОЗ И РЕЙТИНГ ---
-        function computePeriodAnalytics() {
-            const p = state.period;
-            const totalDays = Math.max(1, parseInt(p.totalDays) || 7);
-            const elapsedDays = Math.min(totalDays, Math.max(1, parseInt(p.elapsedDays) || 1));
-            const remainingDays = Math.max(0, totalDays - elapsedDays);
-
-            // Суммируем общий факт точки по всем сотрудникам
-            const storeFacts = emptyMetricsObj();
-            let totalTeamHours = 0;
-
-            (p.staff || []).forEach(member => {
-                totalTeamHours += parseFloat(member.hours) || 0;
-                METRICS.forEach(m => {
-                    storeFacts[m.id] += parseFloat((member.facts && member.facts[m.id]) || 0);
-                });
-            });
-
-            // Аналитика по каждому из 7 показателей
-            const metricStats = {};
-            let sumFactPct = 0;
-            let sumForecastPct = 0;
-            let activeCount = 0;
-
-            METRICS.forEach(m => {
-                const plan = parseFloat((p.plans && p.plans[m.id]) || 0);
-                const fact = storeFacts[m.id] || 0;
-                const factPct = plan > 0 ? (fact / plan) * 100 : 0;
-                const dailyPace = fact / elapsedDays;
-                const forecastValue = Math.round(dailyPace * totalDays);
-                const forecastPct = plan > 0 ? (forecastValue / plan) * 100 : 0;
-                const remaining = Math.max(0, plan - fact);
-                const neededPerDay = remainingDays > 0 ? (remaining / remainingDays) : remaining;
-
-                if (plan > 0) {
-                    sumFactPct += Math.min(200, factPct);
-                    sumForecastPct += Math.min(200, forecastPct);
-                    activeCount++;
-                }
-
-                metricStats[m.id] = {
-                    plan,
-                    fact,
-                    factPct: Math.round(factPct * 10) / 10,
-                    forecastValue,
-                    forecastPct: Math.round(forecastPct * 10) / 10,
-                    remaining,
-                    neededPerDay: Math.ceil(neededPerDay)
-                };
-            });
-
-            const overallFactPct = activeCount > 0 ? Math.round((sumFactPct / activeCount) * 10) / 10 : 0;
-            const overallForecastPct = activeCount > 0 ? Math.round((sumForecastPct / activeCount) * 10) / 10 : 0;
-            const timeProgressPct = Math.round((elapsedDays / totalDays) * 100);
-
-            // Рейтинг сотрудников (личный план пропорционально часам в периоде)
-            const staffRanking = (p.staff || []).map(member => {
-                const hours = parseFloat(member.hours) || 0;
-                const hourShare = totalTeamHours > 0
-                    ? (hours / totalTeamHours)
-                    : (p.staff.length > 0 ? 1 / p.staff.length : 0);
-
-                let empSumPct = 0;
-                let empActiveMetrics = 0;
-                const kpis = {};
-
-                METRICS.forEach(m => {
-                    const storePlan = parseFloat((p.plans && p.plans[m.id]) || 0);
-                    const personalPlan = Math.round(storePlan * hourShare);
-                    const fact = parseFloat((member.facts && member.facts[m.id]) || 0);
-                    const pct = personalPlan > 0 ? (fact / personalPlan) * 100 : 0;
-
-                    if (personalPlan > 0) {
-                        empSumPct += Math.min(200, pct);
-                        empActiveMetrics++;
-                    }
-
-                    kpis[m.id] = {
-                        personalPlan,
-                        fact,
-                        pct: Math.round(pct)
-                    };
-                });
-
-                const scorePct = empActiveMetrics > 0 ? Math.round((empSumPct / empActiveMetrics) * 10) / 10 : 0;
-
-                return {
-                    ...member,
-                    hours,
-                    hourSharePct: Math.round(hourShare * 100),
-                    scorePct,
-                    kpis
-                };
-            });
-
-            staffRanking.sort((a, b) => {
-                if (b.scorePct !== a.scorePct) return b.scorePct - a.scorePct;
-                return ((b.facts && b.facts.tovarka) || 0) - ((a.facts && a.facts.tovarka) || 0);
-            });
-
-            return {
-                totalDays,
-                elapsedDays,
-                remainingDays,
-                timeProgressPct,
-                totalTeamHours,
-                overallFactPct,
-                overallForecastPct,
-                metricStats,
-                staffRanking
-            };
-        }
-
-        // --- ОБЩИЙ РЕНДЕР ВСЕХ ВКЛАДОК ---
-        function renderAll() {
-            updateHeaderAndCloudStatus();
-            const analytics = computePeriodAnalytics();
-
-            renderDashboardTab(analytics);
-            renderInputTab(analytics);
-            renderLeaderboardTab(analytics);
-            renderHistoryTab();
-        function updateHeaderAndCloudStatus(syncing = false) {
-            const p = state.period;
-            document.getElementById('headerPeriodTitle').textContent = p.title || 'Текущий период';
-            document.getElementById('headerDaysPill').textContent = `День ${p.elapsedDays || 1} из ${p.totalDays || 7}`;
-            document.getElementById('headerPeriodDates').textContent = `${formatShortDate(p.startDate)} — ${formatShortDate(p.endDate)} (${p.totalDays} дн.)`;
-
-            const dot = document.getElementById('cloudDot');
-            const label = document.getElementById('cloudStatusLabel');
-            if (syncing) {
-                dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping';
-                label.textContent = 'Синхронизация...';
-            } else if (state.googleScriptUrl && state.googleScriptUrl.startsWith('https://')) {
-                dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
-                label.textContent = state.lastSyncTime ? `Облако: ${state.lastSyncTime}` : 'Облако подключено';
-            } else {
-                dot.className = 'w-2 h-2 rounded-full bg-slate-500';
-                label.textContent = 'Локально';
-            }
-        }
-
-        // --- РЕНДЕР ВКЛАДКИ 1: 📊 СВОДКА И ПРОГНОЗ ---
-        function renderDashboardTab(analytics) {
-            document.getElementById('dashPeriodName').textContent = state.period.title || 'Текущий период';
-            document.getElementById('dashElapsedDaysText').textContent = `${analytics.elapsedDays} / ${analytics.totalDays}`;
-            document.getElementById('dashOverallFactPct').textContent = `${analytics.overallFactPct}%`;
-            document.getElementById('dashTimeProgressPct').textContent = `время: ${analytics.timeProgressPct}%`;
-            document.getElementById('dashOverallFactBar').style.width = `${Math.min(100, analytics.overallFactPct)}%`;
-
-            document.getElementById('dashOverallForecastPct').textContent = `${analytics.overallForecastPct}%`;
-            document.getElementById('dashOverallForecastBar').style.width = `${Math.min(100, analytics.overallForecastPct)}%`;
-
-            const paceBadge = document.getElementById('dashPaceStatusBadge');
-            if (analytics.overallForecastPct >= 100) {
-                paceBadge.textContent = '🔥 План выполняется';
-                paceBadge.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300';
-            } else if (analytics.overallForecastPct >= 85) {
-                paceBadge.textContent = '⚡ Близко к плану';
-                paceBadge.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300';
-            } else {
-                paceBadge.textContent = '⚠️ Нужно ускориться';
-                paceBadge.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300';
-            }
-
-            const grid = document.getElementById('dashMetricsGrid');
-            grid.innerHTML = METRICS.map(m => {
-                const st = analytics.metricStats[m.id];
-                const barWidth = Math.min(100, Math.max(0, st.factPct));
-                const isGood = st.forecastPct >= 100;
-                const barColor = st.factPct >= 100 ? 'bg-emerald-500' : isGood ? 'bg-indigo-500' : 'bg-amber-500';
-
-                return `
-                    <div class="bg-[#151c28] rounded-2xl p-3.5 border border-slate-800/80 shadow-sm">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <div class="flex items-center gap-2">
-                                <span class="w-7 h-7 rounded-lg bg-[#0b0f17] border border-slate-800 flex items-center justify-center text-sm">${m.icon}</span>
-                                <div>
-                                    <div class="font-bold text-xs text-white">${m.name}</div>
-                                    <div class="text-[10px] text-slate-400">
-                                        Остаток: <strong class="text-slate-200">${formatNum(st.remaining)}</strong>
-                                        ${analytics.remainingDays > 0 ? `• Нужно в день: <strong class="text-amber-300">${formatNum(st.neededPerDay)}</strong>` : ''}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-xs font-extrabold text-white">
-                                    ${formatNum(st.fact)} <span class="text-slate-500 font-normal">/ ${formatNum(st.plan)}</span>
-                                </div>
-                                <div class="text-[11px] font-extrabold ${st.factPct >= 100 ? 'text-emerald-400' : 'text-indigo-400'}">
-                                    Выполнено: ${st.factPct}%
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Прогресс-бар -->
-                        <div class="w-full bg-[#0b0f17] h-2 rounded-full overflow-hidden mb-2 border border-slate-800/60">
-                            <div class="${barColor} h-full rounded-full transition-all duration-300" style="width: ${barWidth}%"></div>
-                        </div>
-
-                        <!-- Строка прогноза -->
-                        <div class="flex items-center justify-between text-[11px] bg-[#0b0f17] px-2.5 py-1.5 rounded-xl border border-slate-800/80">
-                            <span class="text-slate-400">Прогноз на конец периода:</span>
-                            <span class="font-extrabold ${isGood ? 'text-emerald-400' : 'text-amber-300'}">
-                                ${formatNum(st.forecastValue)} ${m.unit} (${st.forecastPct}%)
-                            </span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function stepElapsedDays(delta) {
-            const p = state.period;
-            const total = Math.max(1, parseInt(p.totalDays) || 7);
-            p.elapsedDays = Math.min(total, Math.max(1, (parseInt(p.elapsedDays) || 1) + delta));
-            saveState(true);
-            renderAll();
-        }
-
-        function copyDashboardSummaryToChat() {
-            const a = computePeriodAnalytics();
-            const p = state.period;
-            const lines = [];
-            lines.push(`📊 СВОДКА И ПРОГНОЗ: ${p.title.toUpperCase()}`);
-            lines.push(`📅 Прошло дней: ${a.elapsedDays} из ${a.totalDays} (Выполнение: ${a.overallFactPct}% | Прогноз: ${a.overallForecastPct}%)`);
-            lines.push(`────────────────────`);
-
-            METRICS.forEach(m => {
-                const st = a.metricStats[m.id];
-                lines.push(`${m.icon} ${m.name}: ${formatNum(st.fact)} / ${formatNum(st.plan)} (${st.factPct}%)`);
-                lines.push(`   ↳ Прогноз: ${formatNum(st.forecastValue)} (${st.forecastPct}%) | Остаток: ${formatNum(st.remaining)}`);
-            });
-
-            copyRawText(lines.join('\n'), '📊 Сводка с прогнозом скопирована!');
-        }
-
-        // --- РЕНДЕР ВКЛАДКИ 2: ✍️ ВНЕСТИ (ПЛАН НА ДЕНЬ + ФАКТ) ---
-        function calculateDailyShiftDistribution() {
-            const ds = state.dailyShift;
-            const totalHours = (ds.employees || []).reduce((s, e) => s + (parseFloat(e.hours) || 0), 0);
-            const perEmp = {};
-
-            (ds.employees || []).forEach(e => {
-                perEmp[e.id] = {
-                    sharePct: totalHours > 0 ? ((parseFloat(e.hours) || 0) / totalHours) * 100 : 0,
-                    metrics: {}
-                };
-            });
-
-            METRICS.forEach(m => {
-                const target = parseFloat((ds.targets && ds.targets[m.id]) || 0);
-                if (totalHours <= 0 || ds.employees.length === 0 || target <= 0) {
-                    ds.employees.forEach(e => perEmp[e.id].metrics[m.id] = 0);
-                    return;
-                }
-
-                if (ds.roundToInt) {
-                    const rawList = ds.employees.map(e => {
-                        const exact = ((parseFloat(e.hours) || 0) / totalHours) * target;
-                        const fl = Math.floor(exact);
-                        return { id: e.id, val: fl, rem: exact - fl };
-                    });
-                    let diff = Math.round(target) - rawList.reduce((acc, x) => acc + x.val, 0);
-                    rawList.sort((a, b) => b.rem - a.rem);
-                    for (let i = 0; i < diff && i < rawList.length; i++) rawList[i].val += 1;
-                    rawList.forEach(x => perEmp[x.id].metrics[m.id] = x.val);
-                } else {
-                    ds.employees.forEach(e => {
-                        const exact = ((parseFloat(e.hours) || 0) / totalHours) * target;
-                        perEmp[e.id].metrics[m.id] = Math.round(exact * 10) / 10;
-                    });
-                }
-            });
-
-            return { totalHours, perEmp };
-        }
-
-        function renderInputTab() {
-            const ds = state.dailyShift;
-            document.getElementById('dailyShiftDate').value = ds.date || getTodayIso();
-            document.getElementById('dailyRoundingBtn').textContent = ds.roundToInt ? 'Округление: Целые' : 'Округление: 0.1';
-
-            // Чипсы постоянной команды для быстрого добавления в смену
-            const activeNames = new Set((ds.employees || []).map(e => e.name.toLowerCase()));
-            const chipsHtml = (state.period.staff || []).map(member => {
-                const inShift = activeNames.has(member.name.toLowerCase());
-                return `
-                    <button type="button" onclick="toggleTeamMemberInShift('${escapeHtml(member.name)}')"
-                        class="px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 border transition ${inShift ? 'bg-indigo-600/25 text-indigo-200 border-indigo-500/50' : 'bg-[#0b0f17] text-slate-300 border-slate-800'}">
-                        ${inShift ? '✓ ' : '+ '}${escapeHtml(member.name)}
-                    </button>
-                `;
-            }).join('');
-            document.getElementById('teamQuickChips').innerHTML = chipsHtml;
-
-            const dist = calculateDailyShiftDistribution();
-            document.getElementById('dailyTotalHoursBadge').textContent = `Всего: ${formatNum(dist.totalHours)} ч.`;
-
-            // Список сотрудников в сегодняшней смене
-            const empListEl = document.getElementById('dailyShiftEmployeesList');
-            if (!ds.employees || ds.employees.length === 0) {
-                empListEl.innerHTML = `<div class="text-center py-4 text-xs text-slate-500 bg-[#0b0f17] rounded-xl border border-dashed border-slate-800">Добавьте сотрудников, работающих сегодня</div>`;
-            } else {
-                empListEl.innerHTML = ds.employees.map(emp => {
-                    const d = dist.perEmp[emp.id] || { sharePct: 0, metrics: {} };
-                    const badges = METRICS.map(m => `
-                        <div class="bg-[#151c28] px-2 py-1 rounded-lg border border-slate-800/80 flex items-center justify-between text-[11px]">
-                            <span class="text-slate-400 truncate">${m.icon} ${m.name}</span>
-                            <span class="font-extrabold text-emerald-400">${formatNum(d.metrics[m.id])}</span>
-                        </div>
-                    `).join('');
-
-                    return `
-                        <div class="bg-[#0b0f17] p-3 rounded-xl border border-slate-800">
-                            <div class="flex items-center justify-between mb-2">
-                                <div>
-                                    <span class="font-extrabold text-xs text-white">${escapeHtml(emp.name)}</span>
-                                    <span class="text-[11px] text-indigo-400 font-bold ml-1.5">(${Math.round(d.sharePct)}% смены)</span>
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <button onclick="stepShiftEmpHours('${emp.id}', -1)" class="w-6 h-6 rounded bg-slate-800 text-slate-200 font-bold text-xs">−</button>
-                                    <span class="text-xs font-extrabold text-emerald-400 px-1.5">${emp.hours}ч</span>
-                                    <button onclick="stepShiftEmpHours('${emp.id}', 1)" class="w-6 h-6 rounded bg-slate-800 text-slate-200 font-bold text-xs">+</button>
-                                    <button onclick="removeShiftEmp('${emp.id}')" class="ml-1 text-slate-500 hover:text-rose-400 px-1">✕</button>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-1">
-                                ${badges}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            // Поля дневного плана точки
-            document.getElementById('dailyMetricsInputsList').innerHTML = METRICS.map(m => {
-                const val = (ds.targets && ds.targets[m.id]) || 0;
-                return `
-                    <div class="flex items-center justify-between bg-[#0b0f17] px-3 py-2 rounded-xl border border-slate-800">
-                        <span class="text-xs font-semibold text-slate-200">${m.icon} ${m.name}</span>
-                        <input type="number" inputmode="decimal" value="${val === 0 ? '' : val}" placeholder="0"
-                            oninput="updateDailyTarget('${m.id}', this.value)"
-                            class="w-28 bg-[#151c28] border border-slate-700 rounded-lg px-2.5 py-1 text-right font-extrabold text-white text-xs focus:outline-none focus:border-emerald-500">
-                    </div>
-                `;
-            }).join('');
-
-            // Шаблон для чата
-            renderDailyChatTemplate(dist);
-
-            // Под-режим 2: Внести факт за смену
-            const factDateEl = document.getElementById('factEntryDate');
-            if (!factDateEl.value) factDateEl.value = getTodayIso();
-
-            const currentSelectedEmp = document.getElementById('factEntryEmpName').value;
-            document.getElementById('factEmployeeSelectorChips').innerHTML = (state.period.staff || []).map(member => {
-                const active = currentSelectedEmp.trim().toLowerCase() === member.name.toLowerCase();
-                return `
-                    <button type="button" onclick="selectFactEmployee('${escapeHtml(member.name)}')"
-                        class="px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 border transition ${active ? 'bg-emerald-500 text-slate-950 border-emerald-400' : 'bg-[#0b0f17] text-slate-300 border-slate-800'}">
-                        👤 ${escapeHtml(member.name)}
-                    </button>
-                `;
-            }).join('');
-
-            const factGrid = document.getElementById('factEntryMetricsGrid');
-            if (!factGrid.innerHTML.trim()) {
-                renderFactEntryInputs();
-            }
-        }
-
-        function renderFactEntryInputs(prefill = {}) {
-            document.getElementById('factEntryMetricsGrid').innerHTML = METRICS.map(m => {
-                const v = prefill[m.id] !== undefined ? prefill[m.id] : '';
-                return `
-                    <div class="flex items-center justify-between bg-[#0b0f17] px-3 py-2 rounded-xl border border-slate-800">
-                        <span class="text-xs font-bold text-slate-200">${m.icon} ${m.name}</span>
-                        <input type="number" inputmode="decimal" id="factInput_${m.id}" value="${v}" placeholder="0"
-                            class="w-32 bg-[#151c28] border border-slate-700 rounded-lg px-2.5 py-1.5 text-right font-extrabold text-emerald-400 text-xs focus:outline-none focus:border-emerald-500">
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderDailyChatTemplate(distData) {
-            const dist = distData || calculateDailyShiftDistribution();
-            const ds = state.dailyShift;
-            document.getElementById('fmtBtn_emp').className = ds.chatFormat === 'by_emp' ? 'px-2 py-1 rounded-md font-bold bg-indigo-600 text-white' : 'px-2 py-1 rounded-md font-bold text-slate-400';
-            document.getElementById('fmtBtn_metric').className = ds.chatFormat === 'by_metric' ? 'px-2 py-1 rounded-md font-bold bg-indigo-600 text-white' : 'px-2 py-1 rounded-md font-bold text-slate-400';
-
-            const lines = [];
-            lines.push(`📊 ПЛАН НА ДЕНЬ — ${formatShortDate(ds.date)}`);
-            lines.push(`⏱ Всего часов в смене: ${formatNum(dist.totalHours)} ч.`);
-            lines.push(`────────────────────`);
-
-            if (ds.chatFormat === 'by_emp') {
-                (ds.employees || []).forEach((e, idx) => {
-                    const d = dist.perEmp[e.id] || { sharePct: 0, metrics: {} };
-                    lines.push(`👤 ${e.name} (${e.hours}ч | ${Math.round(d.sharePct)}%):`);
-                    METRICS.forEach(m => {
-                        lines.push(`• ${m.name}: ${formatNum(d.metrics[m.id])} / `);
-                    });
-                    if (idx < ds.employees.length - 1) lines.push('');
-                });
-            } else {
-                METRICS.forEach((m, idx) => {
-                    lines.push(`${m.icon} ${m.name} (План: ${formatNum(ds.targets[m.id])}):`);
-                    (ds.employees || []).forEach(e => {
-                        const d = dist.perEmp[e.id] || { metrics: {} };
-                        lines.push(`• ${e.name} (${e.hours}ч): ${formatNum(d.metrics[m.id])} / `);
-                    });
-                    if (idx < METRICS.length - 1) lines.push('');
-                });
-            }
-
-            lines.push(`────────────────────`);
-            lines.push(`✍️ Скопируйте и впишите свой ФАКТ после знака «/»`);
-            document.getElementById('dailyChatTextarea').value = lines.join('\n');
-        }
-
-        // --- ОБРАБОТЧИКИ ВКЛАДКИ "ВНЕСТИ" ---
-        function updateDailyShiftDate(val) { state.dailyShift.date = val; saveState(); renderDailyChatTemplate(); }
-        function toggleDailyRounding() { state.dailyShift.roundToInt = !state.dailyShift.roundToInt; saveState(); renderInputTab(); }
-        function setChatFormat(fmt) { state.dailyShift.chatFormat = fmt; saveState(); renderDailyChatTemplate(); }
-
-        function updateDailyTarget(metricId, val) {
-            state.dailyShift.targets[metricId] = val === '' ? 0 : parseFloat(val);
-            saveState();
-            renderInputTab();
-        }
-
-        function fillDailyPlanFromAverage() {
-            const days = Math.max(1, parseInt(state.period.totalDays) || 7);
-            METRICS.forEach(m => {
-                const pPlan = parseFloat(state.period.plans[m.id]) || 0;
-                state.dailyShift.targets[m.id] = Math.round(pPlan / days);
-            });
-            saveState();
-            renderInputTab();
-            showToast(`📊 Дневной план заполнен (План ÷ ${days} дн.)`);
-        }
-
-        function fillDailyPlanFromRemaining() {
-            const a = computePeriodAnalytics();
-            const remDays = Math.max(1, a.remainingDays || 1);
-            METRICS.forEach(m => {
-                state.dailyShift.targets[m.id] = a.metricStats[m.id].neededPerDay;
-            });
-            saveState();
-            renderInputTab();
-            showToast(`⚡ Заполнено из остатка на ${remDays} дн.`);
-        }
-
-        function toggleTeamMemberInShift(name) {
-            const ds = state.dailyShift;
-            const idx = ds.employees.findIndex(e => e.name.toLowerCase() === name.toLowerCase());
-            if (idx >= 0) {
-                ds.employees.splice(idx, 1);
-            } else {
-                ds.employees.push({ id: 'de_' + Date.now() + Math.random().toString(36).slice(2, 4), name, hours: 12 });
-            }
-            saveState();
-            renderInputTab();
-        }
-
-        function addShiftEmployeeFromForm() {
-            const nameEl = document.getElementById('newShiftEmpName');
-            const hoursEl = document.getElementById('newShiftEmpHours');
-            const name = nameEl.value.trim();
-            const hours = parseFloat(hoursEl.value) || 12;
-            if (!name) { showToast('⚠️ Введите имя сотрудника'); return; }
-
-            state.dailyShift.employees.push({ id: 'de_' + Date.now(), name, hours });
-            if (!state.period.staff.some(s => s.name.toLowerCase() === name.toLowerCase())) {
-                state.period.staff.push({ id: 's_' + Date.now(), name, hours: 0, facts: emptyMetricsObj() });
-            }
-            nameEl.value = '';
-            saveState();
-            renderAll();
-        }
-
-        function stepShiftEmpHours(id, delta) {
-            const emp = state.dailyShift.employees.find(e => e.id === id);
-            if (!emp) return;
-            emp.hours = Math.max(0.5, Math.min(24, (parseFloat(emp.hours) || 0) + delta));
-            saveState();
-            renderInputTab();
-        }
-
-        function removeShiftEmp(id) {
-            state.dailyShift.employees = state.dailyShift.employees.filter(e => e.id !== id);
-            saveState();
-            renderInputTab();
-        }
-
-        function selectFactEmployee(name) {
-            document.getElementById('factEntryEmpName').value = name;
-            renderInputTab();
-        }
-
-        function parseFactFromChatText() {
-            const text = document.getElementById('chatParseInput').value;
-            if (!text.trim()) { showToast('⚠️ Вставьте текст из чата'); return; }
-
-            const parsed = {};
-            METRICS.forEach(m => {
-                // Ищем паттерн "Название: План / Факт" или "Название: Факт"
-                const regexSlash = new RegExp(m.name + '[^\\n\\/]*\\/\\s*([0-9]+(?:[.,][0-9]+)?)', 'i');
-                const regexSimple = new RegExp(m.name + '[^0-9\\n]*([0-9]+(?:[.,][0-9]+)?)', 'i');
-                const matchSlash = text.match(regexSlash);
-                if (matchSlash && matchSlash[1]) {
-                    parsed[m.id] = parseFloat(matchSlash[1].replace(',', '.'));
-                } else {
-                    const matchSimple = text.match(regexSimple);
-                    if (matchSimple && matchSimple[1]) {
-                        parsed[m.id] = parseFloat(matchSimple[1].replace(',', '.'));
-                    }
-                }
-            });
-
-            renderFactEntryInputs(parsed);
-            showToast('⚡ Цифры распознаны! Проверьте и сохраните');
-        }
-
-        function submitDailyFactEntry() {
-            const name = document.getElementById('factEntryEmpName').value.trim();
-            const date = document.getElementById('factEntryDate').value || getTodayIso();
-            const hours = parseFloat(document.getElementById('factEntryHours').value) || 0;
-
-            if (!name) {
-                showToast('⚠️ Выберите или введите имя сотрудника');
-                return;
-            }
-
-            const entryFacts = emptyMetricsObj();
-            let hasAnyValue = hours > 0;
-            METRICS.forEach(m => {
-                const el = document.getElementById('factInput_' + m.id);
-                const val = el ? (parseFloat(el.value) || 0) : 0;
-                entryFacts[m.id] = val;
-                if (val > 0) hasAnyValue = true;
-            });
-
-            if (!hasAnyValue) {
-                showToast('⚠️ Введите хотя бы один показатель или часы');
-                return;
-            }
-
-            // 1. Находим или создаем сотрудника в текущем периоде
-            let member = state.period.staff.find(s => s.name.toLowerCase() === name.toLowerCase());
-            if (!member) {
-                member = { id: 's_' + Date.now(), name, hours: 0, facts: emptyMetricsObj() };
-                state.period.staff.push(member);
-            }
-
-            member.hours = (parseFloat(member.hours) || 0) + hours;
-            if (!member.facts) member.facts = emptyMetricsObj();
-            METRICS.forEach(m => {
-                member.facts[m.id] = (parseFloat(member.facts[m.id]) || 0) + entryFacts[m.id];
-            });
-
-            // 2. Записываем в лог истории смен
-            if (!state.period.logs) state.period.logs = [];
-            state.period.logs.unshift({
-                id: 'log_' + Date.now(),
-                date,
-                empName: member.name,
-                hours,
-                facts: entryFacts
-            });
-
-            saveState(true);
-            renderFactEntryInputs({}); // очищаем инпуты
-            document.getElementById('chatParseInput').value = '';
-            renderAll();
-            showToast(`✅ Факт (${member.name}) добавлен и синхронизирован!`);
-        }
-        }
-
-        // --- РЕНДЕР ВКЛАДКИ 3: 🏆 РЕЙТИНГ (ТАБЛИЦА И КАРТОЧКИ) ---
-        function setLeaderboardView(view) {
-            state.leaderboardView = view;
-            saveState();
-            renderLeaderboardTab(computePeriodAnalytics());
-        }
-
-        function renderLeaderboardTab(analytics) {
-            const ranked = analytics.staffRanking;
-
-            // Пьедестал ТОП-3
-            const podiumEl = document.getElementById('podiumSection');
-            const top3 = [ranked[0], ranked[1], ranked[2]];
-            const medals = ['🥇 1 место', '🥈 2 место', '🥉 3 место'];
-            const borders = ['border-amber-500/50 bg-amber-500/10', 'border-slate-600 bg-[#151c28]', 'border-amber-700/40 bg-[#151c28]'];
-
-            podiumEl.innerHTML = top3.map((emp, idx) => {
-                if (!emp) {
-                    return `<div class="bg-[#151c28]/50 border border-slate-800/60 rounded-2xl p-3 text-center text-xs text-slate-600">—</div>`;
-                }
-                return `
-                    <div class="rounded-2xl p-3 border ${borders[idx]} text-center shadow-sm">
-                        <div class="text-[10px] font-extrabold text-amber-300 mb-0.5">${medals[idx]}</div>
-                        <div class="font-extrabold text-xs text-white truncate">${escapeHtml(emp.name)}</div>
-                        <div class="text-base font-black text-emerald-400 mt-0.5">${emp.scorePct}%</div>
-                        <div class="text-[10px] text-slate-400">${emp.hours}ч (${emp.hourSharePct}%)</div>
-                    </div>
-                `;
-            }).join('');
-
-            // Кнопки переключения вида
-            document.getElementById('lbView_table').className = state.leaderboardView === 'table'
-                ? 'px-2.5 py-1.5 rounded-lg transition bg-indigo-600 text-white'
-                : 'px-2.5 py-1.5 rounded-lg transition text-slate-400';
-            document.getElementById('lbView_cards').className = state.leaderboardView === 'cards'
-                ? 'px-2.5 py-1.5 rounded-lg transition bg-indigo-600 text-white'
-                : 'px-2.5 py-1.5 rounded-lg transition text-slate-400';
-
-            const container = document.getElementById('leaderboardContainer');
-            if (ranked.length === 0) {
-                container.innerHTML = `<div class="text-center py-6 text-xs text-slate-500">Нет данных по сотрудникам</div>`;
-                return;
-            }
-
-            if (state.leaderboardView === 'table') {
-                // Сводная таблица с горизонтальным скроллом по всем 7 показателям
-                const rowsHtml = ranked.map((emp, idx) => {
-                    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}.`;
-                    const cells = METRICS.map(m => {
-                        const k = emp.kpis[m.id];
-                        const color = k.pct >= 100 ? 'text-emerald-400' : k.pct >= 75 ? 'text-amber-300' : 'text-slate-300';
-                        return `
-                            <td class="px-2.5 py-2.5 text-right border-b border-slate-800/80 whitespace-nowrap">
-                                <div class="font-extrabold text-xs ${color}">${formatNum(k.fact)} <span class="text-[10px] text-slate-500 font-normal">/${formatNum(k.personalPlan)}</span></div>
-                                <div class="text-[10px] text-slate-400">${k.pct}%</div>
-                            </td>
-                        `;
-                    }).join('');
-
-                    return `
-                        <tr class="hover:bg-slate-800/30">
-                            <td class="sticky left-0 bg-[#111726] px-2.5 py-2.5 border-b border-r border-slate-800 whitespace-nowrap z-10">
-                                <div class="font-extrabold text-xs text-white">${medal} ${escapeHtml(emp.name)}</div>
-                                <div class="text-[10px] text-slate-400">${emp.hours}ч • <strong class="text-emerald-400">${emp.scorePct}%</strong></div>
-                            </td>
-                            ${cells}
-                        </tr>
-                    `;
-                }).join('');
-
-                const headersHtml = METRICS.map(m => `
-                    <th class="px-2.5 py-2 text-right text-[10px] font-bold text-slate-400 border-b border-slate-800 whitespace-nowrap">
-                        ${m.icon} ${m.name}
-                    </th>
-                `).join('');
-
-                container.innerHTML = `
-                    <div class="overflow-x-auto rounded-xl border border-slate-800 bg-[#0b0f17]">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-[#111726]">
-                                    <th class="sticky left-0 bg-[#111726] px-2.5 py-2 text-[10px] font-bold text-slate-300 border-b border-r border-slate-800 z-10">Сотрудник</th>
-                                    ${headersHtml}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${rowsHtml}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            } else {
-                // Подробные карточки сотрудников
-                container.innerHTML = `<div class="space-y-2.5">` + ranked.map((emp, idx) => {
-                    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
-                    const kpiItems = METRICS.map(m => {
-                        const k = emp.kpis[m.id];
-                        return `
-                            <div class="bg-[#151c28] px-2.5 py-1.5 rounded-lg border border-slate-800 flex items-center justify-between text-xs">
-                                <span class="text-slate-300">${m.icon} ${m.name}</span>
-                                <span class="font-bold text-white">${formatNum(k.fact)} <span class="text-slate-500 text-[10px]">/ ${formatNum(k.personalPlan)} (${k.pct}%)</span></span>
-                            </div>
-                        `;
-                    }).join('');
-
-                    return `
-                        <div class="bg-[#0b0f17] p-3 rounded-xl border border-slate-800">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="font-extrabold text-sm text-white">${medal} ${escapeHtml(emp.name)} <span class="text-xs text-slate-400 font-normal">(${emp.hours}ч)</span></div>
-                                <span class="px-2.5 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-extrabold text-xs">${emp.scorePct}%</span>
-                            </div>
-                            <div class="grid grid-cols-1 gap-1">
-                                ${kpiItems}
-                            </div>
-                        </div>
-                    `;
-                }).join('') + `</div>`;
-            }
-        }
-
-        function copyLeaderboardToChat() {
-            const a = computePeriodAnalytics();
-            const lines = [];
-            lines.push(`🏆 РЕЙТИНГ: ${state.period.title.toUpperCase()} (День ${a.elapsedDays} из ${a.totalDays})`);
-            lines.push(`────────────────────`);
-
-            a.staffRanking.forEach((emp, idx) => {
-                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}.`;
-                lines.push(`${medal} ${emp.name} — ${emp.scorePct}% (${emp.hours}ч)`);
-                METRICS.forEach(m => {
-                    const k = emp.kpis[m.id];
-                    lines.push(`   ${m.icon} ${m.name}: ${formatNum(k.fact)} / ${formatNum(k.personalPlan)} (${k.pct}%)`);
-                });
-                lines.push('');
-            });
-
-            copyRawText(lines.join('\n'), '🏆 Таблица рейтинга скопирована в чат!');
-        }
-
-        // --- РЕНДЕР ВКЛАДКИ 4: 📜 ИСТОРИЯ ---
-        function renderHistoryTab() {
-            const logs = state.period.logs || [];
-            const logsEl = document.getElementById('historyLogsList');
-
-            if (logs.length === 0) {
-                logsEl.innerHTML = `<div class="text-center py-5 text-xs text-slate-500 bg-[#0b0f17] rounded-xl border border-dashed border-slate-800">В текущем периоде ещё нет записей смен</div>`;
-            } else {
-                logsEl.innerHTML = logs.map(log => {
-                    const nonZero = METRICS.filter(m => (log.facts && log.facts[m.id]) > 0)
-                        .map(m => `${m.icon} ${m.name}: <b>${formatNum(log.facts[m.id])}</b>`).join(' • ');
-
-                    return `
-                        <div class="bg-[#0b0f17] p-3 rounded-xl border border-slate-800 flex items-start justify-between gap-2">
-                            <div>
-                                <div class="text-xs font-extrabold text-white">
-                                    👤 ${escapeHtml(log.empName)} <span class="text-emerald-400">(${log.hours}ч)</span>
-                                    <span class="text-[10px] text-slate-400 font-normal ml-1">📅 ${formatShortDate(log.date)}</span>
-                                </div>
-                                <div class="text-[11px] text-slate-300 mt-1 leading-relaxed">${nonZero || 'Только часы смены'}</div>
-                            </div>
-                            <button onclick="deleteShiftLog('${log.id}')" class="text-xs text-slate-500 hover:text-rose-400 px-1.5 py-1" title="Отменить и вычесть запись">
-                                🗑
-                            </button>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            // Архив периодов
-            const archEl = document.getElementById('archivedPeriodsList');
-            const archives = state.archives || [];
-            if (archives.length === 0) {
-                archEl.innerHTML = `<div class="text-center py-5 text-xs text-slate-500 bg-[#0b0f17] rounded-xl border border-dashed border-slate-800">Архив пуст. Завершённые недели будут храниться здесь.</div>`;
-            } else {
-                archEl.innerHTML = archives.map((arch, idx) => `
-                    <div class="bg-[#0b0f17] p-3 rounded-xl border border-slate-800 flex items-center justify-between gap-2">
-                        <div>
-                            <div class="font-extrabold text-xs text-white">${escapeHtml(arch.title)}</div>
-                            <div class="text-[10px] text-slate-400">${formatShortDate(arch.startDate)} — ${formatShortDate(arch.endDate)} (${arch.totalDays} дн.) • Участников: ${(arch.staff || []).length}</div>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <button onclick="restoreArchivedPeriod(${idx})" class="text-[11px] font-bold bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-lg">
-                                Открыть
-                            </button>
-                            <button onclick="deleteArchivedPeriod(${idx})" class="text-xs text-slate-500 hover:text-rose-400 px-1.5">✕</button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-        }
-
-        function deleteShiftLog(logId) {
-            const idx = (state.period.logs || []).findIndex(l => l.id === logId);
-            if (idx < 0) return;
-            const log = state.period.logs[idx];
-
-            // Вычитаем значения обратно из накопленного факта сотрудника
-            const member = state.period.staff.find(s => s.name.toLowerCase() === log.empName.toLowerCase());
-            if (member) {
-                member.hours = Math.max(0, (parseFloat(member.hours) || 0) - (parseFloat(log.hours) || 0));
-                METRICS.forEach(m => {
-                    member.facts[m.id] = Math.max(0, (parseFloat(member.facts[m.id]) || 0) - (parseFloat(log.facts[m.id]) || 0));
-                });
-            }
-
-            state.period.logs.splice(idx, 1);
-            saveState(true);
-            renderAll();
-            showToast('🗑 Запись смены удалена, итоги пересчитаны');
-        }
-
-        function archiveCurrentPeriod() {
-            if (!state.archives) state.archives = [];
-            state.archives.unshift(JSON.parse(JSON.stringify(state.period)));
-            saveState(true);
-            renderHistoryTab();
-            showToast('📥 Текущий период сохранен в архив!');
-        }
-
-        function restoreArchivedPeriod(idx) {
-            const target = state.archives[idx];
-            if (!target) return;
-            state.period = JSON.parse(JSON.stringify(target));
-            saveState(true);
-            switchTab('dashboard');
-            showToast(`📂 Загружен период: ${target.title}`);
-        }
-
-        function deleteArchivedPeriod(idx) {
-            state.archives.splice(idx, 1);
-            saveState(true);
-            renderHistoryTab();
-        }
-
-        // --- РЕНДЕР ВКЛАДКИ 5: ⚙️ НАСТРОЙКИ ---
-        function renderSettingsTab() {
-            const p = state.period;
-            document.getElementById('setPeriodTitle').value = p.title || '';
-            document.getElementById('setStartDate').value = p.startDate || getTodayIso();
-            document.getElementById('setEndDate').value = p.endDate || '';
-            document.getElementById('setTotalDays').value = p.totalDays || 7;
-            document.getElementById('setElapsedDays').value = p.elapsedDays || 1;
-
-            // Планы на период
-            document.getElementById('settingsPeriodPlansList').innerHTML = METRICS.map(m => {
-                const v = (p.plans && p.plans[m.id]) || 0;
-                return `
-                    <div class="flex items-center justify-between bg-[#0b0f17] px-3 py-2 rounded-xl border border-slate-800">
-                        <span class="text-xs font-semibold text-slate-200">${m.icon} ${m.name}</span>
-                        <input type="number" inputmode="decimal" value="${v === 0 ? '' : v}" placeholder="0"
-                            oninput="updatePeriodPlan('${m.id}', this.value)"
-                            class="w-32 bg-[#151c28] border border-slate-700 rounded-lg px-2.5 py-1 text-right font-extrabold text-amber-300 text-xs focus:outline-none focus:border-amber-500">
-                    </div>
-                `;
-            }).join('');
-
-            // Редактор факта и часов каждого сотрудника
-            document.getElementById('settingsStaffFactEditorList').innerHTML = (p.staff || []).map(member => {
-                const inputs = METRICS.map(m => {
-                    const fv = (member.facts && member.facts[m.id]) || 0;
-                    return `
-                        <div class="flex items-center justify-between bg-[#151c28] px-2.5 py-1.5 rounded-lg border border-slate-800">
-                            <span class="text-[11px] text-slate-300 truncate">${m.icon} ${m.name}</span>
-                            <input type="number" inputmode="decimal" value="${fv}"
-                                oninput="updateStaffManualFact('${member.id}', '${m.id}', this.value)"
-                                class="w-24 bg-[#0b0f17] border border-slate-700 rounded px-2 py-0.5 text-right font-extrabold text-emerald-400 text-xs">
-                        </div>
-                    `;
-                }).join('');
-
-                return `
-                    <details class="bg-[#0b0f17] rounded-xl border border-slate-800 p-3">
-                        <summary class="flex items-center justify-between cursor-pointer select-none">
-                            <span class="font-extrabold text-xs text-white">👤 ${escapeHtml(member.name)} <span class="text-indigo-400 font-normal">(${member.hours} ч.)</span></span>
-                            <span class="text-[11px] text-slate-400">Изменить факт ▼</span>
-                        </summary>
-                        <div class="mt-3 pt-2 border-t border-slate-800 space-y-2">
-                            <div class="flex items-center justify-between bg-[#151c28] px-2.5 py-1.5 rounded-lg border border-slate-800">
-                                <span class="text-xs font-bold text-indigo-300">⏱ Всего часов за период:</span>
-                                <input type="number" inputmode="decimal" step="0.5" value="${member.hours}"
-                                    oninput="updateStaffManualHours('${member.id}', this.value)"
-                                    class="w-24 bg-[#0b0f17] border border-indigo-500/40 rounded px-2 py-0.5 text-right font-extrabold text-indigo-300 text-xs">
-                            </div>
-                            <div class="grid grid-cols-1 gap-1.5">
-                                ${inputs}
-                            </div>
-                            <div class="flex justify-end pt-1">
-                                <button onclick="deleteStaffMember('${member.id}')" class="text-[11px] text-rose-400 hover:underline">Удалить сотрудника из периода</button>
-                            </div>
-                        </div>
-                    </details>
-                `;
-            }).join('');
-
-            document.getElementById('settingsGoogleUrl').value = state.googleScriptUrl || '';
-            document.getElementById('autoSyncToggle').checked = !!state.autoSync;
-        }
-
-        function updatePeriodMeta(field, val) {
-            const p = state.period;
-            if (field === 'totalDays' || field === 'elapsedDays') {
-                p[field] = Math.max(1, parseInt(val) || 1);
-                if (field === 'totalDays') {
-                    p.endDate = addDaysIso(p.startDate, p.totalDays);
-                }
-            } else {
-                p[field] = val;
-                if (field === 'startDate') {
-                    p.endDate = addDaysIso(p.startDate, p.totalDays);
-                }
-            }
-            saveState(true);
-            updateHeaderAndCloudStatus();
-        }
-
-        function setQuickPeriodDays(days) {
-            state.period.totalDays = days;
-            state.period.endDate = addDaysIso(state.period.startDate, days);
-            if (state.period.elapsedDays > days) state.period.elapsedDays = days;
-            saveState(true);
-            renderAll();
-            showToast(`🗓 Длительность периода: ${days} дн.`);
-        }
-
-        function updatePeriodPlan(metricId, val) {
-            state.period.plans[metricId] = val === '' ? 0 : parseFloat(val);
-            saveState(true);
-        }
-
-        function updateStaffManualHours(empId, val) {
-            const m = state.period.staff.find(s => s.id === empId);
-            if (!m) return;
-            m.hours = val === '' ? 0 : parseFloat(val);
-            saveState(true);
-        }
-
-        function updateStaffManualFact(empId, metricId, val) {
-            const m = state.period.staff.find(s => s.id === empId);
-            if (!m) return;
-            if (!m.facts) m.facts = emptyMetricsObj();
-            m.facts[metricId] = val === '' ? 0 : parseFloat(val);
-            saveState(true);
-        }
-
-        function promptAddTeamMember() {
-            switchTab('input');
-            setInputSubMode('shift_plan');
-            document.getElementById('newShiftEmpName').focus();
-            showToast('Введите имя нового сотрудника в поле');
-        }
-
-        function deleteStaffMember(empId) {
-            state.period.staff = state.period.staff.filter(s => s.id !== empId);
-            saveState(true);
-            renderAll();
-        }
-
-        // --- СОЗДАНИЕ НОВОГО ПЕРИОДА / НЕДЕЛИ ---
-        function openNewPeriodModal() {
-            document.getElementById('modalNewPeriodTitle').value = 'Новая неделя';
-            document.getElementById('modalNewStartDate').value = getTodayIso();
-            document.getElementById('modalNewTotalDays').value = state.period.totalDays || 7;
-            const modal = document.getElementById('newPeriodModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeNewPeriodModal() {
-            const modal = document.getElementById('newPeriodModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function confirmCreateNewPeriod() {
-            // 1. Сохраняем текущий период в архив
-            if (!state.archives) state.archives = [];
-            state.archives.unshift(JSON.parse(JSON.stringify(state.period)));
-
-            const title = document.getElementById('modalNewPeriodTitle').value.trim() || 'Новый период';
-            const start = document.getElementById('modalNewStartDate').value || getTodayIso();
-            const days = Math.max(1, parseInt(document.getElementById('modalNewTotalDays').value) || 7);
-
-            state.period.id = 'p_' + Date.now();
-            state.period.title = title;
-            state.period.startDate = start;
-            state.period.endDate = addDaysIso(start, days);
-            state.period.totalDays = days;
-            state.period.elapsedDays = 1;
-            state.period.logs = [];
-
-            // Обнуляем часы и факты сотрудников для нового старта, сохраняя саму команду
-            state.period.staff.forEach(s => {
-                s.hours = 0;
-                s.facts = emptyMetricsObj();
-            });
-
-            saveState(true);
-            closeNewPeriodModal();
-            renderAll();
-            showToast('🚀 Новый период создан и выгружен в Таблицу!');
-        }
-
-        // --- ОБЛАКО GOOGLE SHEETS (ДЛЯ VERCEL) ---
-        function updateGoogleScriptUrl(val) {
-            state.googleScriptUrl = val.trim() || DEFAULT_GAS_URL;
-            saveState();
-        }
-
-        function toggleAutoSync(checked) {
-            state.autoSync = checked;
-            saveState();
-        }
-
-        function handleCloudQuickClick() {
-            if (state.googleScriptUrl && state.googleScriptUrl.startsWith('https://')) {
-                pushToGoogleCloud(false);
-            } else {
-                switchTab('settings');
-                showToast('☁️ Укажите ссылку на Google Таблицу в настройках');
-            }
-        }
-
-        async function pushToGoogleCloud(silent = false) {
-            const url = (state.googleScriptUrl || DEFAULT_GAS_URL).trim();
-            if (!url.startsWith('https://')) {
-                if (!silent) showToast('⚠️ Сначала вставьте URL скрипта Google Таблицы');
-                return;
-            }
-            updateHeaderAndCloudStatus(true);
-            const logBox = document.getElementById('cloudSyncLogBox');
-            if (logBox) logBox.textContent = '⏳ Выгрузка данных в Google Таблицу...';
-
-            try {
-                await fetch(url, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(state)
-                });
-                const t = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                state.lastSyncTime = t;
-                saveState(false);
-                if (logBox) logBox.textContent = `✅ Успешно сохранено в Google Таблицу в ${t}`;
-                if (!silent) showToast('☁️ Данные сохранены в Google Таблицу!');
-            } catch (e) {
-                updateHeaderAndCloudStatus(false);
-                if (logBox) logBox.textContent = '❌ Ошибка отправки в Google Таблицу';
-                if (!silent) showToast('❌ Ошибка соединения');
-            }
-        }
-
-        async function pullFromGoogleCloud(silent = false) {
-            const url = (state.googleScriptUrl || DEFAULT_GAS_URL).trim();
-            if (!url.startsWith('https://')) {
-                if (!silent) showToast('⚠️ Сначала вставьте URL скрипта Google Таблицы');
-                return;
-            }
-            updateHeaderAndCloudStatus(true);
-            const logBox = document.getElementById('cloudSyncLogBox');
-            if (logBox) logBox.textContent = '⏳ Загрузка данных из Google Таблицы...';
-
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                if (data && data.period) {
-                    const keepUrl = state.googleScriptUrl || DEFAULT_GAS_URL;
-                    const keepTab = state.activeTab;
-                    state = { ...defaultState, ...data, googleScriptUrl: keepUrl, activeTab: keepTab };
-                    const t = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                    state.lastSyncTime = t;
-                    saveState(false);
-                    renderAll();
-                    if (logBox) logBox.textContent = `✅ Данные загружены из Google Таблицы в ${t}`;
-                    if (!silent) showToast('⬇️ Данные из Google Таблицы загружены!');
-                } else {
-                    // Если таблица еще пустая — инициализируем её текущими данными
-                    await pushToGoogleCloud(true);
-                    if (logBox) logBox.textContent = '✅ Таблица инициализирована начальными данными!';
-                    if (!silent) showToast('☁️ Таблица подключена и заполнена!');
-                }
-            } catch (e) {
-                updateHeaderAndCloudStatus(false);
-                if (logBox) logBox.textContent = '❌ Ошибка чтения. Проверьте доступ «Все (Anyone)» в Apps Script';
-                if (!silent) showToast('❌ Не удалось загрузить из таблицы');
-            }
-        }
-
-        async function pushToGoogleCloud(silent = false) {
-            const url = (state.googleScriptUrl || '').trim();
-            if (!url.startsWith('https://')) {
-                if (!silent) showToast('⚠️ Сначала вставьте URL скрипта Google Таблицы');
-                return;
-            }
-            const logBox = document.getElementById('cloudSyncLogBox');
-            if (logBox) logBox.textContent = '⏳ Выгрузка данных в Google Таблицу...';
-
-            try {
-                await fetch(url, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(state)
-                });
-                const t = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                state.lastSyncTime = t;
-                saveState();
-                if (logBox) logBox.textContent = `✅ Успешно сохранено в Google Таблицу в ${t}`;
-                if (!silent) showToast('☁️ Данные сохранены в Google Таблицу!');
-            } catch (e) {
-                if (logBox) logBox.textContent = '❌ Ошибка отправки в Google Таблицу';
-                if (!silent) showToast('❌ Ошибка соединения');
-            }
-        }
-
-        async function pullFromGoogleCloud() {
-            const url = (state.googleScriptUrl || '').trim();
-            if (!url.startsWith('https://')) {
-                showToast('⚠️ Сначала вставьте URL скрипта Google Таблицы');
-                return;
-            }
-            const logBox = document.getElementById('cloudSyncLogBox');
-            if (logBox) logBox.textContent = '⏳ Загрузка данных из Google Таблицы...';
-
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                if (data && data.period) {
-                    const keepUrl = state.googleScriptUrl;
-                    state = { ...defaultState, ...data, googleScriptUrl: keepUrl };
-                    const t = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                    state.lastSyncTime = t;
-                    saveState();
-                    renderAll();
-                    if (logBox) logBox.textContent = `✅ Данные загружены из Google Таблицы в ${t}`;
-                    showToast('⬇️ Данные из Google Таблицы загружены!');
-                } else {
-                    if (logBox) logBox.textContent = 'ℹ️ В таблице ещё нет данных. Нажмите «Выгрузить в Таблицу».';
-                    showToast('ℹ️ Таблица пока пуста');
-                }
-            } catch (e) {
-                if (logBox) logBox.textContent = '❌ Ошибка чтения. Проверьте доступ «Все (Anyone)»';
-                showToast('❌ Не удалось загрузить из таблицы');
-            }
-        }
-
-        function copyGoogleScriptCode() {
-            const code = document.getElementById('gsCodeBlock').innerText;
-            copyRawText(code, '📋 Код Google Apps Script скопирован!');
-        }
-
-        // --- УТИЛИТЫ КОПИРОВАНИЯ И УВЕДОМЛЕНИЙ ---
-        function copyTextarea(id, msg) {
-            const el = document.getElementById(id);
-            copyRawText(el.value, msg);
-        }
-
-        async function shareTextarea(id) {
-            const text = document.getElementById(id).value;
-            if (navigator.share) {
-                try { await navigator.share({ text }); } catch (e) {}
-            } else {
-                copyRawText(text, '📋 Скопировано в буфер обмена!');
-            }
-        }
-
-        function copyRawText(text, msg) {
-            const temp = document.createElement('textarea');
-            temp.value = text;
-            document.body.appendChild(temp);
-            temp.select();
-            temp.setSelectionRange(0, 99999);
-            try { document.execCommand('copy'); } catch (e) {}
-            document.body.removeChild(temp);
-            showToast(msg || 'Скопировано!');
-        }
-
-        function scrollToElement(id) {
-            setTimeout(() => {
-                const el = document.getElementById(id);
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-        }
-
-        let toastTimeout = null;
-        function showToast(text) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toastText').textContent = text;
-            toast.classList.remove('opacity-0', '-translate-y-3');
-            toast.classList.add('opacity-100', 'translate-y-0');
-            if (toastTimeout) clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toast.classList.add('opacity-0', '-translate-y-3');
-                toast.classList.remove('opacity-100', 'translate-y-0');
-            }, 2600);
-        }
-
-        function escapeHtml(str) {
-            if (typeof str !== 'string') return '';
-            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
-
-        window.onload = function() {
-            switchTab(state.activeTab || 'dashboard');
-            setInputSubMode(state.inputSubMode || 'shift_plan');
-            // Автоматическая синхронизация с вашей Google Таблицей при входе
-            if (state.googleScriptUrl && state.googleScriptUrl.startsWith('https://')) {
-                pullFromGoogleCloud(true);
-            }
-        };
-    </script>
+      } catch (e) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+      }
+    }
+
+    // ================= НАВИГАЦИЯ =================
+    function switchTab(tab) {
+      if (tab === 'settings' && (!currentUser || currentUser.role !== 'admin')) return;
+      ['summary', 'input', 'rating', 'history', 'settings'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById(`nav-${t}`);
+        if (btn) btn.className = t === tab
+          ? 'flex flex-col items-center py-1 text-blue-400'
+          : 'flex flex-col items-center py-1 text-gray-400';
+      });
+    }
+
+    function renderAll() {
+      renderSummary();
+      renderInputTab();
+      renderRating();
+      renderHistory();
+      renderSettings();
+    }
+
+    // ИНИЦИАЛИЗАЦИЯ
+    window.addEventListener('DOMContentLoaded', () => {
+      renderQuickLoginHints();
+      const savedSession = sessionStorage.getItem('active_tab_user');
+      if (savedSession) {
+        try {
+          currentUser = JSON.parse(savedSession);
+          applyUserRoleUI();
+          document.getElementById('authModal').classList.add('hidden');
+        } catch (e) {}
+      }
+      renderAll();
+      loadFromCloud(false);
+    });
+  </script>
 </body>
 </html>
